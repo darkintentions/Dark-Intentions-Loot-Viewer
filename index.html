@@ -415,7 +415,38 @@
         return;
       }
 
-      const headers = lines[0].split('\t');
+      let headers = lines[0].split('\t').map(h => {
+        const trimmed = h.trim();
+        // Rename SUBTYPE to Armor Type
+        return trimmed.toLowerCase() === 'subtype' ? 'Armor Type' : trimmed;
+      });
+
+      // Map of SUBTYPE values to Armor Type display names
+      const armorTypeMap = {
+        'Cloth': 'Cloth',
+        'Leather': 'Leather',
+        'Mail': 'Mail',
+        'Plate': 'Plate',
+        'Miscellaneous': 'Accessory',
+        'Bows': 'Bow',
+        'Crossbows': 'Crossbow',
+        'Guns': 'Gun',
+        'One-Handed Axes': '1H Axe',
+        'Two-Handed Axes': '2H Axe',
+        'One-Handed Maces': '1H Mace',
+        'Two-Handed Maces': '2H Mace',
+        'One-Handed Swords': '1H Sword',
+        'Two-Handed Swords': '2H Sword',
+        'Daggers': 'Dagger',
+        'Fist Weapons': 'Fist Weapon',
+        'Polearms': 'Polearm',
+        'Staves': 'Staff',
+        'Wands': 'Wand',
+        'Shields': 'Shield',
+        'Held In Off-hand': 'Off-hand',
+        'Other': 'Other'
+      };
+
       const dataObjects = lines
         .slice(1)
         .map(l => l.split('\t'))
@@ -436,6 +467,10 @@
               const period = hours >= 12 ? 'PM' : 'AM';
               const hours12 = hours % 12 || 12;
               val = `${hours12}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')} ${period}`;
+            }
+            // Map Armor Type values
+            if (key === 'Armor Type' && val && armorTypeMap[val]) {
+              val = armorTypeMap[val];
             }
             obj[key] = val;
           });
