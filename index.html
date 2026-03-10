@@ -664,13 +664,18 @@
       font-size: 1rem;
       font-weight: 600;
       color: var(--text);
-      margin-bottom: 0.5rem;
+    }
+
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      flex: 1;
     }
 
     .player-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 1rem;
+      display: flex;
+      gap: 2rem;
       font-size: 0.85rem;
       color: var(--text-dim);
     }
@@ -679,6 +684,7 @@
       display: flex;
       flex-direction: column;
       gap: 0.25rem;
+      align-items: center;
     }
 
     .stat-label {
@@ -692,6 +698,7 @@
       font-size: 0.95rem;
       font-weight: 600;
       color: var(--text);
+      text-align: center;
     }
 
     .empty-roster {
@@ -703,7 +710,7 @@
     .player-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 1rem;
       cursor: pointer;
       user-select: none;
       transition: background 0.15s;
@@ -720,7 +727,8 @@
       color: var(--text-dim);
       font-size: 0.75rem;
       transition: transform 0.2s;
-      margin-left: 1rem;
+      margin-right: 0.5rem;
+      flex-shrink: 0;
     }
 
     .player-items {
@@ -755,11 +763,13 @@
       background: var(--bg);
       border-radius: 4px;
       font-size: 0.8rem;
+      color: #ffffff;
     }
 
     .item-cell {
       overflow: hidden;
       text-overflow: ellipsis;
+      color: #ffffff;
       white-space: nowrap;
     }
 
@@ -1310,25 +1320,36 @@
             ${sortedPlayers.map((player, idx) => `
               <div class="roster-item">
                 <div class="player-header" onclick="togglePlayerItems(${idx})">
-                  <div class="player-name">${esc(player.name)}</div>
-                  <div class="player-stats">
-                    <div class="stat-item">
-                      <div class="stat-label">Total Items</div>
-                      <div class="stat-value">${player.items.length}</div>
+                  <div class="expand-icon">▼</div>
+                  <div class="player-info">
+                    <div class="player-name">${esc(player.name)}</div>
+                    <div class="player-stats">
+                      <div class="stat-item">
+                        <div class="stat-label">Total Items</div>
+                        <div class="stat-value">${player.items.length}</div>
+                      </div>
                     </div>
                   </div>
-                  <div class="expand-icon">▼</div>
                 </div>
                 <div class="player-items hidden" id="player-items-${idx}">
                   <div class="items-list">
-                    ${player.items.map(item => `
-                      <div class="item-row">
-                        <div class="item-cell item-name">${esc(item.item || 'Unknown')}</div>
-                        <div class="item-cell item-boss">${esc(item.boss || '—')}</div>
-                        <div class="item-cell item-response">${esc(item.response || '—')}</div>
-                        <div class="item-cell item-date">${esc(item.date || '—')}</div>
-                      </div>
-                    `).join('')}
+                    ${player.items.map(item => {
+                      const itemName = item.item || 'Unknown';
+                      // Match the full URL with all parameters (item ID and bonus data)
+                      const urlMatch = itemName.match(/https:\/\/www\.wowhead\.com\/item=(\d+)[^"\s]*/);
+                      const itemId = urlMatch ? urlMatch[1] : null;
+                      // Remove the entire URL (up to and including any query parameters) to get just the item name
+                      const itemDisplayName = itemName.replace(/https:\/\/www\.wowhead\.com\/item=\d+[^\s]*\s*/, '').trim();
+
+                      return `
+                        <div class="item-row">
+                          <div class="item-cell item-name" ${itemId ? `data-wowhead="item=${itemId}"` : ''}>${esc(itemDisplayName)}</div>
+                          <div class="item-cell item-boss">${esc(item.boss || '—')}</div>
+                          <div class="item-cell item-response">${esc(item.response || '—')}</div>
+                          <div class="item-cell item-date">${esc(item.date || '—')}</div>
+                        </div>
+                      `;
+                    }).join('')}
                   </div>
                 </div>
               </div>
@@ -1336,6 +1357,11 @@
           </div>
         `;
         container.innerHTML = rosterHTML;
+
+        // Reinitialize Wowhead tooltips
+        if (window.WowheadPower) {
+          window.WowheadPower.refreshLinks();
+        }
       } catch (err) {
         console.error('[Roster] Error loading roster:', err);
         document.getElementById('roster-container').innerHTML =
