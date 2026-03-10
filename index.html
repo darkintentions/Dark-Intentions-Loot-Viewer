@@ -348,22 +348,35 @@
           try {
             const key = rowKey(data);
             const req = store.add({ key, data, insertedAt: Date.now() + i });
-            req.onsuccess = () => added++;
-            req.onerror = e => {
-              if (e.target.error.name === 'ConstraintError') skipped++;
-              else console.warn('DB insert error:', e.target.error);
-              e.preventDefault(); // prevent transaction abort on duplicate
+            req.onsuccess = () => {
+              added++;
+              console.log('[addRowsToDB] Row', i, 'added successfully');
+            };
+            req.onerror = (e) => {
+              if (e.target.error?.name === 'ConstraintError') {
+                skipped++;
+                console.log('[addRowsToDB] Row', i, 'skipped (duplicate)');
+              } else {
+                console.warn('[addRowsToDB] Insert error on row', i, ':', e.target.error);
+              }
+              e.preventDefault(); // prevent transaction abort
             };
           } catch (err) {
-            console.error('[addRowsToDB] Error with row', i, ':', err, 'Data:', data);
-            e.preventDefault();
+            console.error('[addRowsToDB] Error creating key for row', i, ':', err, 'Data:', data);
           }
         });
 
-        tx.oncomplete = () => resolve({ added, skipped });
+        tx.oncomplete = () => {
+          console.log('[addRowsToDB] Transaction complete. Added:', added, 'Skipped:', skipped);
+          resolve({ added, skipped });
+        };
         tx.onerror = () => {
-          console.error('[addRowsToDB] Transaction error:', tx.error);
-          reject(tx.error);
+          console.error('[addRowsToDB] Transaction aborted:', tx.error);
+          resolve({ added, skipped }); // Still resolve with partial results
+        };
+        tx.onabort = () => {
+          console.error('[addRowsToDB] Transaction aborted');
+          resolve({ added, skipped }); // Still resolve with partial results
         };
       });
     }
