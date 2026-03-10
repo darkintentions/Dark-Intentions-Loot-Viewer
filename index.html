@@ -508,8 +508,13 @@
     function extractIdBeforeQuote(val) {
       const first = val.indexOf('"');
       if (first === -1) return '';
-      const match = val.substring(0, first).match(/\d+/);
-      return match ? match[0] : '';
+      const prefix = val.substring(0, first);
+      // WoW item link format: |Hitem:12345:0:0:... — match specifically after "item:"
+      const itemMatch = prefix.match(/[Ii]tem:(\d+)/);
+      if (itemMatch) return itemMatch[1];
+      // Fallback: first standalone whole number
+      const numMatch = prefix.match(/\b(\d+)\b/);
+      return numMatch ? numMatch[1] : '';
     }
 
     function wowheadLink(row, h, idField) {
@@ -611,14 +616,15 @@
 
     // ── One-time migration: clean GEAR1/GEAR2 fields on existing rows ─────────
     async function migrateGearFields() {
-      if (localStorage.getItem('tsv_gear_cleanup_v1')) return;
+      if (localStorage.getItem('tsv_gear_cleanup_v2')) return;
 
       const records = await getAllRows();
+      // Re-process any row that has a GEAR1/GEAR2 field — catches both raw and
+      // previously mis-processed rows (wrong ID extracted by old regex)
       const toFix = records.filter(r =>
-        ['gear1', 'gear2'].some(g => {
-          const k = Object.keys(r.data).find(k => k.toLowerCase() === g);
-          return k && r.data[k].includes('"');
-        })
+        ['gear1', 'gear2'].some(g =>
+          Object.keys(r.data).some(k => k.toLowerCase() === g)
+        )
       );
 
       if (toFix.length > 0) {
@@ -630,10 +636,16 @@
             const newData = { ...record.data };
             ['gear1', 'gear2'].forEach(g => {
               const k = Object.keys(newData).find(k => k.toLowerCase() === g);
-              if (k && newData[k].includes('"')) {
-                const raw = newData[k];
+              if (!k) return;
+              const raw = newData[k];
+              if (raw.includes('"')) {
+                // Raw value still has quotes — extract ID and name
                 newData[`_${g}_id`] = extractIdBeforeQuote(raw);
                 newData[k] = extractBetweenQuotes(raw);
+              } else {
+                // Already cleaned — re-run ID extraction on original stored value
+                // (ID may have been wrong from old regex; try again on current value)
+                newData[`_${g}_id`] = extractIdBeforeQuote(raw + '"');
               }
             });
             store.delete(record.key);
@@ -645,7 +657,7 @@
         });
       }
 
-      localStorage.setItem('tsv_gear_cleanup_v1', '1');
+      localStorage.setItem('tsv_gear_cleanup_v2', '1');
     }
 
     // ── Init ─────────────────────────────────────────────────────────────────
