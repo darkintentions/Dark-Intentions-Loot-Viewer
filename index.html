@@ -502,10 +502,19 @@
     }
 
 
+    function cellContent(val) {
+      if (!val) return '<span style="opacity:0.4">—</span>';
+      // If it's a Wowhead URL, convert to a link for tooltip processing
+      if (val.includes('wowhead.com')) {
+        return `<a href="${esc(val)}" data-wh-icon="true"></a>`;
+      }
+      return esc(val);
+    }
+
     function renderTable(headers, rows) {
       const ths = headers.map(h => `<th>${esc(h)}</th>`).join('');
       const trs = rows.map(row => {
-        const tds = headers.map(h => `<td>${esc(row[h] ?? '') || '<span style="opacity:0.4">—</span>'}</td>`).join('');
+        const tds = headers.map(h => `<td>${cellContent(row[h] ?? '')}</td>`).join('');
         return `<tr>${tds}</tr>`;
       }).join('');
       return `<div class="table-wrapper"><table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`;
@@ -516,7 +525,7 @@
         const fields = headers.map(h => `
           <div class="card-field">
             <span class="field-key">${esc(h)}</span>
-            <span class="field-value">${esc(row[h] ?? '') || '<span style="opacity:0.4">—</span>'}</span>
+            <span class="field-value">${cellContent(row[h] ?? '')}</span>
           </div>`).join('');
         return `<div class="card">${fields}</div>`;
       }).join('');
