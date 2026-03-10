@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TSV Viewer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3250;
+      --accent: #5b8dee;
+      --accent-dim: #3d60b0;
+      --danger: #e05b5b;
+      --danger-dim: #b03d3d;
+      --success-bg: #1a2d22;
+      --success-border: #2e6b4a;
+      --success-text: #4caf7d;
+      --warn-bg: #2d2a1a;
+      --warn-border: #6b5a2e;
+      --warn-text: #f0c060;
+      --text: #e0e4f0;
+      --text-dim: #7a80a0;
+      --radius: 10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    /* ── DB BAR ── */
+    .db-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.6rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+      gap: 0.75rem;
+    }
+
+    .db-count { color: var(--text-dim); }
+
+    /* ── INPUT ── */
+    .input-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .input-section label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.6rem;
+    }
+
+    textarea {
+      width: 100%;
+      height: 140px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.82rem;
+      padding: 0.75rem;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    textarea:focus { border-color: var(--accent); }
+
+    /* ── NOTIFICATIONS ── */
+    .notify {
+      border-radius: 6px;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+      display: none;
+    }
+
+    .notify.success {
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+      color: var(--success-text);
+    }
+
+    .notify.warning {
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+      color: var(--warn-text);
+    }
+
+    .error-msg {
+      background: #2d1a1a;
+      border: 1px solid #6b2e2e;
+      color: #f08080;
+      border-radius: 6px;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+      display: none;
+    }
+
+    /* ── CONTROLS ── */
+    .controls {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+
+    button {
+      padding: 0.55rem 1.2rem;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-dim); }
+
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--border); }
+
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: var(--danger-dim); }
+
+    .stats { font-size: 0.82rem; color: var(--text-dim); }
+
+    .view-toggle { margin-left: auto; }
+
+    .view-select {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .view-select:focus { border-color: var(--accent); }
+
+    /* ── TABLE ── */
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    thead { background: var(--surface2); }
+
+    th {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 0.7rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+
+    /* ── CARDS ── */
+    .card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.6rem 1.25rem;
+      transition: border-color 0.15s;
+    }
+
+    .card:hover { border-color: var(--accent); }
+
+    .card-field { display: flex; flex-direction: column; gap: 0.15rem; }
+
+    .field-key {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .field-value {
+      font-size: 0.88rem;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+    }
+
+    #output { min-height: 80px; }
+  </style>
+  <script>const whTooltips = {colorLinks: true, iconizeLinks: true, renameLinks: true};</script>
+  <script src="https://wow.zamimg.com/js/tooltips.js"></script>
+</head>
+<body>
+
+  <h1>TSV Viewer</h1>
+  <p class="subtitle">Paste TSV data to add it to the local database. Duplicate rows are automatically skipped.</p>
+
+  <div class="db-bar">
+    <span class="db-count" id="db-count">Loading…</span>
+    <button class="btn-danger" onclick="confirmClearDB()">Clear Database</button>
+  </div>
+
+  <div class="input-section">
+    <label for="tsv-input">Paste TSV data</label>
+    <textarea id="tsv-input" placeholder="Column A&#9;Column B&#9;Column C&#10;Value 1&#9;Value 2&#9;Value 3&#10;Value 4&#9;Value 5&#9;Value 6"></textarea>
+  </div>
+
+  <div id="notify" class="notify"></div>
+  <div id="error" class="error-msg"></div>
+
+  <div class="controls">
+    <button class="btn-primary" onclick="processInput()">Add to Database</button>
+    <button class="btn-ghost" onclick="clearInput()">Clear Input</button>
+    <span class="stats" id="stats"></span>
+    <div class="view-toggle" id="view-toggle" style="display:none;">
+      <select class="view-select" id="view-select" onchange="setView(this.value)">
+        <option value="cards">Cards</option>
+        <option value="table">Table</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="output"></div>
+
+  <script>
+    // ── IndexedDB ────────────────────────────────────────────────────────────
+    const DB_NAME = 'TSVViewerDB';
+    const DB_VERSION = 1;
+    let db;
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = e => {
+          const d = e.target.result;
+          if (!d.objectStoreNames.contains('rows')) {
+            d.createObjectStore('rows', { keyPath: 'key' });
+          }
+        };
+        req.onsuccess = e => resolve(e.target.result);
+        req.onerror = e => reject(e.target.error);
+      });
+    }
+
+    // Use stringified data object as unique key — guarantees exact-match deduplication
+    function rowKey(dataObj) {
+      return JSON.stringify(dataObj);
+    }
+
+    function addRowsToDB(dataObjects) {
+      return new Promise((resolve, reject) => {
+        let added = 0, skipped = 0;
+        const tx = db.transaction('rows', 'readwrite');
+        const store = tx.objectStore('rows');
+
+        dataObjects.forEach((data, i) => {
+          const key = rowKey(data);
+          const req = store.add({ key, data, insertedAt: Date.now() + i });
+          req.onsuccess = () => added++;
+          req.onerror = e => {
+            if (e.target.error.name === 'ConstraintError') skipped++;
+            else console.warn('DB insert error:', e.target.error);
+            e.preventDefault(); // prevent transaction abort on duplicate
+          };
+        });
+
+        tx.oncomplete = () => resolve({ added, skipped });
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    function getAllRows() {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('rows', 'readonly');
+        const req = tx.objectStore('rows').getAll();
+        req.onsuccess = e => resolve(e.target.result);
+        req.onerror = e => reject(e.target.error);
+      });
+    }
+
+    function clearAllRows() {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('rows', 'readwrite');
+        tx.objectStore('rows').clear();
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    // ── Hidden columns (stored in DB but not displayed) ──────────────────────
+    const HIDDEN_COLS = new Set(['itemString', 'owner', 'votes', 'itemid', 'itemID', 'responseID', 'roletype', 'isAwardReason']);
+
+    // ── UI Helpers ───────────────────────────────────────────────────────────
+    let currentView = 'cards';
+
+    function showError(msg) {
+      const el = document.getElementById('error');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function hideError() {
+      document.getElementById('error').style.display = 'none';
+    }
+
+    function showNotify(msg, type = 'success') {
+      const el = document.getElementById('notify');
+      el.textContent = msg;
+      el.className = 'notify ' + type;
+      el.style.display = 'block';
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+
+    function updateDBCount(n) {
+      document.getElementById('db-count').textContent =
+        `${n} row${n !== 1 ? 's' : ''} in database`;
+    }
+
+    // ── Process Input ────────────────────────────────────────────────────────
+    async function processInput() {
+      hideError();
+      const raw = document.getElementById('tsv-input').value.trim();
+
+      if (!raw) {
+        showError('Nothing to process — paste some TSV data first.');
+        return;
+      }
+
+      const lines = raw.split('\n').map(l => l.trimEnd()).filter(l => l.length > 0);
+
+      if (lines.length < 2) {
+        showError('Need at least a header row and one data row.');
+        return;
+      }
+
+      const headers = lines[0].split('\t');
+      const dataObjects = lines
+        .slice(1)
+        .map(l => l.split('\t'))
+        .filter(vals => vals.some(v => v.trim() !== ''))
+        .map(vals => {
+          const obj = {};
+          headers.forEach((h, i) => {
+            obj[h.trim() || `Col${i + 1}`] = vals[i] ?? '';
+          });
+          return obj;
+        });
+
+      if (dataObjects.length === 0) {
+        showError('Only a header row was found — no data rows to add.');
+        return;
+      }
+
+      const { added, skipped } = await addRowsToDB(dataObjects);
+
+      const parts = [];
+      if (added > 0) parts.push(`${added} row${added !== 1 ? 's' : ''} added`);
+      if (skipped > 0) parts.push(`${skipped} duplicate${skipped !== 1 ? 's' : ''} skipped`);
+      const type = added === 0 ? 'warning' : 'success';
+      showNotify(parts.join(' · ') || 'No changes made.', type);
+
+      await refreshDisplay();
+    }
+
+    // ── Display ──────────────────────────────────────────────────────────────
+    async function refreshDisplay() {
+      const records = await getAllRows();
+      records.sort((a, b) => a.insertedAt - b.insertedAt);
+
+      updateDBCount(records.length);
+
+      if (records.length === 0) {
+        document.getElementById('output').innerHTML =
+          '<div class="empty-state">No data in database yet — paste some TSV to get started.</div>';
+        document.getElementById('view-toggle').style.display = 'none';
+        document.getElementById('stats').textContent = '';
+        return;
+      }
+
+      // Build ordered column list: union of all keys, preserving first-seen order, excluding hidden
+      const colSet = new Set();
+      records.forEach(r => Object.keys(r.data).forEach(k => {
+        if (!HIDDEN_COLS.has(k)) colSet.add(k);
+      }));
+      const headers = [...colSet];
+      const rows = records.map(r => r.data);
+
+      document.getElementById('stats').textContent =
+        `${rows.length} row${rows.length !== 1 ? 's' : ''}, ${headers.length} column${headers.length !== 1 ? 's' : ''}`;
+      document.getElementById('view-toggle').style.display = 'flex';
+
+      const out = document.getElementById('output');
+      out.innerHTML = currentView === 'table'
+        ? renderTable(headers, rows)
+        : renderCards(headers, rows);
+    }
+
+    function setView(view) {
+      currentView = view;
+      document.getElementById('view-select').value = view;
+      refreshDisplay();
+    }
+
+    function renderTable(headers, rows) {
+      const ths = headers.map(h => `<th>${esc(h)}</th>`).join('');
+      const trs = rows.map(row => {
+        const tds = headers.map(h => `<td>${esc(row[h] ?? '')}</td>`).join('');
+        return `<tr>${tds}</tr>`;
+      }).join('');
+      return `<div class="table-wrapper"><table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`;
+    }
+
+    function renderCards(headers, rows) {
+      const cards = rows.map(row => {
+        const fields = headers.map(h => `
+          <div class="card-field">
+            <span class="field-key">${esc(h)}</span>
+            <span class="field-value">${esc(row[h] ?? '') || '<span style="opacity:0.4">—</span>'}</span>
+          </div>`).join('');
+        return `<div class="card">${fields}</div>`;
+      }).join('');
+      return `<div class="card-list">${cards}</div>`;
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ── Actions ──────────────────────────────────────────────────────────────
+    function clearInput() {
+      document.getElementById('tsv-input').value = '';
+      hideError();
+    }
+
+    function confirmClearDB() {
+      if (confirm('Delete all rows from the database? This cannot be undone.')) {
+        clearAllRows().then(refreshDisplay);
+      }
+    }
+
+    // Auto-process on paste
+    document.getElementById('tsv-input').addEventListener('paste', () => {
+      setTimeout(processInput, 50);
+    });
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+    openDB()
+      .then(d => { db = d; return refreshDisplay(); })
+      .catch(err => showError('Failed to open database: ' + err.message));
+  </script>
+
+</body>
+</html>
