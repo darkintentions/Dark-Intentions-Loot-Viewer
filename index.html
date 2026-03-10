@@ -423,7 +423,16 @@
         .map(vals => {
           const obj = {};
           headers.forEach((h, i) => {
-            obj[h.trim() || `Col${i + 1}`] = vals[i] ?? '';
+            const key = h.trim() || `Col${i + 1}`;
+            let val = vals[i] ?? '';
+            if (key.toLowerCase() === 'item') {
+              const first = val.indexOf('"');
+              const second = val.indexOf('"', first + 1);
+              if (first !== -1 && second !== -1) {
+                val = val.substring(first + 1, second);
+              }
+            }
+            obj[key] = val;
           });
           return obj;
         });
