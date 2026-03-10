@@ -1,0 +1,25 @@
+# Git folder
+.git/
+
+# Claude Code folder
+.claude/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Node modules (if using npm in future)
+node_modules/
