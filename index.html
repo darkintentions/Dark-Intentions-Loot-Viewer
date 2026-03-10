@@ -632,9 +632,9 @@
       }
     }
 
-    // Auto-process on paste
+    // Auto-process on paste (with delay to ensure text is inserted)
     document.getElementById('tsv-input').addEventListener('paste', () => {
-      setTimeout(processInput, 50);
+      setTimeout(processInput, 200);
     });
 
     // ── One-time migration: clean ITEM field on existing rows ─────────────────
