@@ -1025,7 +1025,7 @@
       // Show/hide card tabs and filter rows based on current view and tab
       const tabsEl = document.getElementById('card-tabs');
       let filteredRows = rows;
-      const professions = new Set(['Alchemy', 'Blacksmithing', 'Enchanting', 'Engineering', 'Inscription', 'Jewelcrafting', 'Leatherworking', 'Cooking']);
+      const professions = new Set(['Alchemy', 'Blacksmithing', 'Enchanting', 'Engineering', 'Inscription', 'Jewelcrafting', 'Leatherworking', 'Cooking', 'Other']);
 
       if (currentView === 'cards') {
         tabsEl.style.display = 'flex';
@@ -1178,7 +1178,7 @@
           db = d;
           getAllRows().then(records => {
             const rows = records.map(r => r.data);
-            const professions = new Set(['Alchemy', 'Blacksmithing', 'Enchanting', 'Engineering', 'Inscription', 'Jewelcrafting', 'Leatherworking', 'Cooking']);
+            const professions = new Set(['Alchemy', 'Blacksmithing', 'Enchanting', 'Engineering', 'Inscription', 'Jewelcrafting', 'Leatherworking', 'Cooking', 'Other']);
 
             let tabRows;
             if (tab === 'untradeable') {
