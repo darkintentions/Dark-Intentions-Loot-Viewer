@@ -404,13 +404,17 @@
 
     // ── Process Input ────────────────────────────────────────────────────────
     async function processInput() {
+      console.log('[processInput] Starting...');
       hideError();
       const raw = document.getElementById('tsv-input').value.trim();
 
       if (!raw) {
+        console.log('[processInput] No data to process');
         showError('Nothing to process — paste some TSV data first.');
         return;
       }
+
+      console.log('[processInput] Found data, processing', raw.length, 'characters');
 
       const lines = raw.split('\n').map(l => l.trimEnd()).filter(l => l.length > 0);
 
@@ -521,6 +525,7 @@
       }
 
       const { added, skipped } = await addRowsToDB(dataObjects);
+      console.log('[processInput] Added:', added, 'Skipped:', skipped);
 
       const parts = [];
       if (added > 0) parts.push(`${added} row${added !== 1 ? 's' : ''} added`);
@@ -528,7 +533,9 @@
       const type = added === 0 ? 'warning' : 'success';
       showNotify(parts.join(' · ') || 'No changes made.', type);
 
+      console.log('[processInput] Calling refreshDisplay...');
       await refreshDisplay();
+      console.log('[processInput] Complete');
     }
 
     // ── Display ──────────────────────────────────────────────────────────────
@@ -634,6 +641,7 @@
 
     // Auto-process on paste (with delay to ensure text is inserted)
     document.getElementById('tsv-input').addEventListener('paste', () => {
+      console.log('[Paste Event] Data pasted, processing in 200ms...');
       setTimeout(processInput, 200);
     });
 
