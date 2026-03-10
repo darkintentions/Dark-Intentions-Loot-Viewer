@@ -648,16 +648,27 @@
 
       if (currentView === 'cards') {
         tabsEl.style.display = 'flex';
+
+        // Calculate counts for each tab
+        const gearRows = rows.filter(row =>
+          row.response !== 'Personal Loot - Non tradeable' && !professions.has(row['Armor Type'])
+        );
+        const untradeableRows = rows.filter(row => row.response === 'Personal Loot - Non tradeable');
+        const professionsRows = rows.filter(row => professions.has(row['Armor Type']));
+
+        // Update tab button text with counts
+        document.querySelector('[data-tab="gear"]').textContent = `Gear (${gearRows.length})`;
+        document.querySelector('[data-tab="untradeable"]').textContent = `Untradeable PL (${untradeableRows.length})`;
+        document.querySelector('[data-tab="professions"]').textContent = `Professions (${professionsRows.length})`;
+
         // Filter rows based on current card tab
         if (currentCardTab === 'untradeable') {
-          filteredRows = rows.filter(row => row.response === 'Personal Loot - Non tradeable');
+          filteredRows = untradeableRows;
         } else if (currentCardTab === 'professions') {
-          filteredRows = rows.filter(row => professions.has(row['Armor Type']));
+          filteredRows = professionsRows;
         } else {
           // 'gear' tab: exclude both untradeable and professions
-          filteredRows = rows.filter(row =>
-            row.response !== 'Personal Loot - Non tradeable' && !professions.has(row['Armor Type'])
-          );
+          filteredRows = gearRows;
         }
 
         // Populate boss filter dropdown with unique bosses from filtered rows
