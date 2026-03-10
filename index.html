@@ -1285,12 +1285,12 @@
 
         return `
           <div class="date-group">
-            <div class="date-header" id="${dateId}-header" onclick="toggleDateGroup('${dateId}')">
+            <div class="date-header collapsed" id="${dateId}-header" onclick="toggleDateGroup('${dateId}')">
               <div class="date-header-toggle">▼</div>
               <div class="date-header-title">${esc(displayDate)}</div>
               <div class="date-header-count">${cardsForDate.length} item${cardsForDate.length !== 1 ? 's' : ''}</div>
             </div>
-            <div class="date-cards" id="${dateId}-cards">
+            <div class="date-cards hidden" id="${dateId}-cards">
               ${cardsHTML}
             </div>
           </div>
