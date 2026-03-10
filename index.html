@@ -369,7 +369,7 @@
     }
 
     // ── Hidden columns (stored in DB but not displayed) ──────────────────────
-    const HIDDEN_COLS = new Set(['itemString', 'owner', 'votes', 'itemid', 'itemID', 'responseID', 'roletype', 'isAwardReason', '_gear1_id', '_gear2_id']);
+    const HIDDEN_COLS = new Set(['itemString', 'owner', 'votes', 'itemid', 'itemID', 'responseID', 'roletype', 'isAwardReason']);
 
     // ── UI Helpers ───────────────────────────────────────────────────────────
     let currentView = 'cards';
@@ -424,21 +424,7 @@
           const obj = {};
           headers.forEach((h, i) => {
             const key = h.trim() || `Col${i + 1}`;
-            const raw = vals[i] ?? '';
-            const lk = key.toLowerCase();
-            if (lk === 'item') {
-              obj[key] = extractBetweenQuotes(raw);
-            } else if (lk === 'gear1') {
-              obj['_gear1_id'] = extractItemId(raw);
-              obj[key] = extractBetweenQuotes(raw);
-              console.log('[GEAR1] raw:', raw, '→ id:', obj['_gear1_id'], 'name:', obj[key]);
-            } else if (lk === 'gear2') {
-              obj['_gear2_id'] = extractItemId(raw);
-              obj[key] = extractBetweenQuotes(raw);
-              console.log('[GEAR2] raw:', raw, '→ id:', obj['_gear2_id'], 'name:', obj[key]);
-            } else {
-              obj[key] = raw;
-            }
+            obj[key] = vals[i] ?? '';
           });
           return obj;
         });
@@ -509,49 +495,11 @@
       refreshDisplay();
     }
 
-    function extractBetweenQuotes(val) {
-      const first = val.indexOf('"');
-      const second = val.indexOf('"', first + 1);
-      return (first !== -1 && second !== -1) ? val.substring(first + 1, second) : val;
-    }
-
-    function extractItemId(val) {
-      // 1. WoW item link: item:12345 anywhere in the string
-      const itemMatch = val.match(/[Ii]tem:(\d+)/);
-      if (itemMatch) return itemMatch[1];
-      // 2. Entire value is just a number
-      const numOnly = val.trim().match(/^(\d+)$/);
-      if (numOnly) return numOnly[1];
-      // 3. Number before the first quote
-      const first = val.indexOf('"');
-      if (first !== -1) {
-        const numMatch = val.substring(0, first).match(/\b(\d+)\b/);
-        if (numMatch) return numMatch[1];
-      }
-      return '';
-    }
-
-    function wowheadLink(row, h, idField) {
-      const itemId = row[idField] || '';
-      const name = esc(row[h] ?? '');
-      if (!itemId) return name || '<span style="opacity:0.4">—</span>';
-      // Wowhead needs the data-wh-icon and data-wh-rename attributes for proper tooltip rendering
-      return `<a href="https://www.wowhead.com/item=${esc(itemId)}" data-wh-icon="true">${name}</a>`;
-    }
-
-    function cellValue(row, h) {
-      switch (h.toLowerCase()) {
-        case 'item':  return wowheadLink(row, h, row['itemID'] ? 'itemID' : 'itemid');
-        case 'gear1': return wowheadLink(row, h, '_gear1_id');
-        case 'gear2': return wowheadLink(row, h, '_gear2_id');
-        default:      return esc(row[h] ?? '') || '<span style="opacity:0.4">—</span>';
-      }
-    }
 
     function renderTable(headers, rows) {
       const ths = headers.map(h => `<th>${esc(h)}</th>`).join('');
       const trs = rows.map(row => {
-        const tds = headers.map(h => `<td>${cellValue(row, h)}</td>`).join('');
+        const tds = headers.map(h => `<td>${esc(row[h] ?? '') || '<span style="opacity:0.4">—</span>'}</td>`).join('');
         return `<tr>${tds}</tr>`;
       }).join('');
       return `<div class="table-wrapper"><table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`;
@@ -562,7 +510,7 @@
         const fields = headers.map(h => `
           <div class="card-field">
             <span class="field-key">${esc(h)}</span>
-            <span class="field-value">${cellValue(row, h)}</span>
+            <span class="field-value">${esc(row[h] ?? '') || '<span style="opacity:0.4">—</span>'}</span>
           </div>`).join('');
         return `<div class="card">${fields}</div>`;
       }).join('');
