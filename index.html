@@ -732,7 +732,6 @@
 
     function setCardTab(tab) {
       currentCardTab = tab;
-      currentBossFilter = ''; // Reset boss filter when changing tabs
       // Update active tab styling
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -740,8 +739,41 @@
           btn.classList.add('active');
         }
       });
-      // Re-render with filtered rows
-      refreshDisplay();
+
+      // Check if current boss filter has any results in the new tab
+      // If not, reset the boss filter
+      if (currentBossFilter) {
+        // Get all rows and filter by tab type
+        openDB().then(d => {
+          db = d;
+          getAllRows().then(records => {
+            const rows = records.map(r => r.data);
+            const professions = new Set(['Alchemy', 'Blacksmithing', 'Enchanting', 'Engineering', 'Inscription', 'Jewelcrafting', 'Leatherworking', 'Cooking']);
+
+            let tabRows;
+            if (tab === 'untradeable') {
+              tabRows = rows.filter(row => row.response === 'Personal Loot - Non tradeable');
+            } else if (tab === 'professions') {
+              tabRows = rows.filter(row => professions.has(row['Armor Type']));
+            } else {
+              tabRows = rows.filter(row =>
+                row.response !== 'Personal Loot - Non tradeable' && !professions.has(row['Armor Type'])
+              );
+            }
+
+            // Check if any rows match the current boss filter
+            const hasResults = tabRows.some(row => row.boss === currentBossFilter);
+
+            if (!hasResults) {
+              currentBossFilter = ''; // Reset filter if no results
+            }
+
+            refreshDisplay();
+          });
+        });
+      } else {
+        refreshDisplay();
+      }
     }
 
     function setBossFilter(boss) {
