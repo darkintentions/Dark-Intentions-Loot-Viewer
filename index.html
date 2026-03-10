@@ -323,13 +323,14 @@
       });
     }
 
-    // Use player, date, and itemID as unique key for deduplication
+    // Use player, date, itemID, and response as unique key for deduplication
     function rowKey(dataObj) {
       try {
         const key = {
           player: dataObj.player || '',
           date: dataObj.date || '',
-          itemID: dataObj.itemID || ''
+          itemID: dataObj.itemID || '',
+          response: dataObj.response || ''
         };
         return JSON.stringify(key);
       } catch (err) {
