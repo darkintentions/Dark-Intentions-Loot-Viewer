@@ -322,6 +322,11 @@
       border-color: var(--accent);
     }
 
+    .boss-filter:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .filter-dropdowns {
       display: flex;
       gap: 0.75rem;
@@ -369,11 +374,11 @@
       <button class="tab-btn" data-tab="professions" onclick="setCardTab('professions')">Professions</button>
     </div>
     <div class="filter-dropdowns">
-      <select id="boss-filter" class="boss-filter" onchange="setBossFilter(this.value)">
-        <option value="">All Bosses</option>
-      </select>
       <select id="response-filter" class="boss-filter" onchange="setResponseFilter(this.value)">
         <option value="">All Responses</option>
+      </select>
+      <select id="boss-filter" class="boss-filter" onchange="setBossFilter(this.value)">
+        <option value="">All Bosses</option>
       </select>
     </div>
   </div>
@@ -674,30 +679,23 @@
           ? professionsRowsUnfiltered
           : gearRowsUnfiltered;
 
-        // Boss filter
-        const bossSet = new Set();
-        tabRowsForFilters.forEach(row => {
-          if (row.boss) bossSet.add(row.boss);
-        });
-        const sortedBosses = Array.from(bossSet).sort();
-
-        const bossSelect = document.getElementById('boss-filter');
-        const currentBossValue = bossSelect.value;
-        bossSelect.innerHTML = '<option value="">All Bosses</option>';
-        sortedBosses.forEach(boss => {
-          const option = document.createElement('option');
-          option.value = boss;
-          option.textContent = boss;
-          bossSelect.appendChild(option);
-        });
-        bossSelect.value = currentBossValue; // Restore previous selection if still valid
-
         // Response filter
         const responseSet = new Set();
         tabRowsForFilters.forEach(row => {
           if (row.response) responseSet.add(row.response);
         });
-        const sortedResponses = Array.from(responseSet).sort();
+        let sortedResponses = Array.from(responseSet).sort();
+
+        // If boss filter is active, only show responses available for that boss
+        if (currentBossFilter) {
+          const responsesForBoss = new Set();
+          tabRowsForFilters.forEach(row => {
+            if (row.boss === currentBossFilter && row.response) {
+              responsesForBoss.add(row.response);
+            }
+          });
+          sortedResponses = Array.from(responsesForBoss).sort();
+        }
 
         const responseSelect = document.getElementById('response-filter');
         const currentResponseValue = responseSelect.value;
@@ -709,6 +707,37 @@
           responseSelect.appendChild(option);
         });
         responseSelect.value = currentResponseValue; // Restore previous selection if still valid
+        responseSelect.disabled = sortedResponses.length === 0; // Disable if no options
+
+        // Boss filter
+        const bossSet = new Set();
+        tabRowsForFilters.forEach(row => {
+          if (row.boss) bossSet.add(row.boss);
+        });
+        let sortedBosses = Array.from(bossSet).sort();
+
+        // If response filter is active, only show bosses available for that response
+        if (currentResponseFilter) {
+          const bossesForResponse = new Set();
+          tabRowsForFilters.forEach(row => {
+            if (row.response === currentResponseFilter && row.boss) {
+              bossesForResponse.add(row.boss);
+            }
+          });
+          sortedBosses = Array.from(bossesForResponse).sort();
+        }
+
+        const bossSelect = document.getElementById('boss-filter');
+        const currentBossValue = bossSelect.value;
+        bossSelect.innerHTML = '<option value="">All Bosses</option>';
+        sortedBosses.forEach(boss => {
+          const option = document.createElement('option');
+          option.value = boss;
+          option.textContent = boss;
+          bossSelect.appendChild(option);
+        });
+        bossSelect.value = currentBossValue; // Restore previous selection if still valid
+        bossSelect.disabled = sortedBosses.length === 0; // Disable if no options
 
         // Now apply boss and response filters to all row sets if one is selected
         let gearRows = gearRowsUnfiltered;
