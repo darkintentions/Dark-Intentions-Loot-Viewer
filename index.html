@@ -417,8 +417,11 @@
 
       let headers = lines[0].split('\t').map(h => {
         const trimmed = h.trim();
-        // Rename SUBTYPE to Armor Type
-        return trimmed.toLowerCase() === 'subtype' ? 'Armor Type' : trimmed;
+        const lower = trimmed.toLowerCase();
+        // Rename columns
+        if (lower === 'subtype') return 'Armor Type';
+        if (lower === 'equiploc') return 'Gear Slot';
+        return trimmed;
       });
 
       // Map of SUBTYPE values to Armor Type display names
@@ -447,6 +450,33 @@
         'Other': 'Other'
       };
 
+      // Map of equipLoc values to Gear Slot display names
+      const gearSlotMap = {
+        'Head': 'Head',
+        'Neck': 'Neck',
+        'Shoulder': 'Shoulder',
+        'Chest': 'Chest',
+        'Waist': 'Waist',
+        'Legs': 'Legs',
+        'Feet': 'Feet',
+        'Wrist': 'Wrist',
+        'Hands': 'Hands',
+        'Finger': 'Ring',
+        'Trinket': 'Trinket',
+        'Back': 'Cloak',
+        'Main Hand': 'Main Hand',
+        'Off Hand': 'Off Hand',
+        'Ranged': 'Ranged',
+        'Two Hand': '2-Hand',
+        'Held In Off-hand': 'Off-hand',
+        'Armor Token': 'Token',
+        'Blacksmithing': 'Crafting',
+        'Jewelcrafting': 'Crafting',
+        'Bows': 'Bow',
+        'Crossbows': 'Crossbow',
+        'Guns': 'Gun'
+      };
+
       const dataObjects = lines
         .slice(1)
         .map(l => l.split('\t'))
@@ -471,6 +501,10 @@
             // Map Armor Type values
             if (key === 'Armor Type' && val && armorTypeMap[val]) {
               val = armorTypeMap[val];
+            }
+            // Map Gear Slot values
+            if (key === 'Gear Slot' && val && gearSlotMap[val]) {
+              val = gearSlotMap[val];
             }
             obj[key] = val;
           });
