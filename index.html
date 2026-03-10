@@ -650,11 +650,18 @@
         tabsEl.style.display = 'flex';
 
         // Calculate counts for each tab
-        const gearRows = rows.filter(row =>
+        let gearRows = rows.filter(row =>
           row.response !== 'Personal Loot - Non tradeable' && !professions.has(row['Armor Type'])
         );
-        const untradeableRows = rows.filter(row => row.response === 'Personal Loot - Non tradeable');
-        const professionsRows = rows.filter(row => professions.has(row['Armor Type']));
+        let untradeableRows = rows.filter(row => row.response === 'Personal Loot - Non tradeable');
+        let professionsRows = rows.filter(row => professions.has(row['Armor Type']));
+
+        // Apply boss filter to all row sets if one is selected
+        if (currentBossFilter) {
+          gearRows = gearRows.filter(row => row.boss === currentBossFilter);
+          untradeableRows = untradeableRows.filter(row => row.boss === currentBossFilter);
+          professionsRows = professionsRows.filter(row => row.boss === currentBossFilter);
+        }
 
         // Update tab button text with counts
         document.querySelector('[data-tab="gear"]').textContent = `Gear (${gearRows.length})`;
@@ -671,9 +678,16 @@
           filteredRows = gearRows;
         }
 
-        // Populate boss filter dropdown with unique bosses from filtered rows
+        // Populate boss filter dropdown with unique bosses from all unfiltered tab rows
+        const allTabRows = [
+          ...rows.filter(row =>
+            row.response !== 'Personal Loot - Non tradeable' && !professions.has(row['Armor Type'])
+          ),
+          ...rows.filter(row => row.response === 'Personal Loot - Non tradeable'),
+          ...rows.filter(row => professions.has(row['Armor Type']))
+        ];
         const bossSet = new Set();
-        filteredRows.forEach(row => {
+        allTabRows.forEach(row => {
           if (row.boss) bossSet.add(row.boss);
         });
         const sortedBosses = Array.from(bossSet).sort();
@@ -688,11 +702,6 @@
           bossSelect.appendChild(option);
         });
         bossSelect.value = currentValue; // Restore previous selection if still valid
-
-        // Further filter by boss if one is selected
-        if (currentBossFilter) {
-          filteredRows = filteredRows.filter(row => row.boss === currentBossFilter);
-        }
       } else {
         tabsEl.style.display = 'none';
       }
