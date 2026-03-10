@@ -323,9 +323,13 @@
       });
     }
 
-    // Use stringified data object as unique key — guarantees exact-match deduplication
+    // Use player, date, and itemID as unique key for deduplication
     function rowKey(dataObj) {
-      return JSON.stringify(dataObj);
+      return JSON.stringify({
+        player: dataObj.player,
+        date: dataObj.date,
+        itemID: dataObj.itemID
+      });
     }
 
     function addRowsToDB(dataObjects) {
