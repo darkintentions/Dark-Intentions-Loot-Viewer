@@ -348,36 +348,21 @@
           try {
             const key = rowKey(data);
             const req = store.add({ key, data, insertedAt: Date.now() + i });
-            req.onsuccess = () => {
-              added++;
-              console.log('[addRowsToDB] Row', i, 'added successfully');
-            };
+            req.onsuccess = () => added++;
             req.onerror = (e) => {
               if (e.target.error?.name === 'ConstraintError') {
                 skipped++;
-                console.log('[addRowsToDB] Row', i, 'skipped (duplicate)');
-              } else {
-                console.warn('[addRowsToDB] Insert error on row', i, ':', e.target.error);
               }
               e.preventDefault(); // prevent transaction abort
             };
           } catch (err) {
-            console.error('[addRowsToDB] Error creating key for row', i, ':', err, 'Data:', data);
+            console.error('[addRowsToDB] Error creating key for row', i, ':', err);
           }
         });
 
-        tx.oncomplete = () => {
-          console.log('[addRowsToDB] Transaction complete. Added:', added, 'Skipped:', skipped);
-          resolve({ added, skipped });
-        };
-        tx.onerror = () => {
-          console.error('[addRowsToDB] Transaction aborted:', tx.error);
-          resolve({ added, skipped }); // Still resolve with partial results
-        };
-        tx.onabort = () => {
-          console.error('[addRowsToDB] Transaction aborted');
-          resolve({ added, skipped }); // Still resolve with partial results
-        };
+        tx.oncomplete = () => resolve({ added, skipped });
+        tx.onerror = () => resolve({ added, skipped }); // Still resolve with partial results
+        tx.onabort = () => resolve({ added, skipped }); // Still resolve with partial results
       });
     }
 
@@ -431,17 +416,13 @@
 
     // ── Process Input ────────────────────────────────────────────────────────
     async function processInput() {
-      console.log('[processInput] Starting...');
       hideError();
       const raw = document.getElementById('tsv-input').value.trim();
 
       if (!raw) {
-        console.log('[processInput] No data to process');
         showError('Nothing to process — paste some TSV data first.');
         return;
       }
-
-      console.log('[processInput] Found data, processing', raw.length, 'characters');
 
       const lines = raw.split('\n').map(l => l.trimEnd()).filter(l => l.length > 0);
 
@@ -552,7 +533,6 @@
       }
 
       const { added, skipped } = await addRowsToDB(dataObjects);
-      console.log('[processInput] Added:', added, 'Skipped:', skipped);
 
       const parts = [];
       if (added > 0) parts.push(`${added} row${added !== 1 ? 's' : ''} added`);
@@ -560,16 +540,13 @@
       const type = added === 0 ? 'warning' : 'success';
       showNotify(parts.join(' · ') || 'No changes made.', type);
 
-      console.log('[processInput] Calling refreshDisplay...');
       await refreshDisplay();
-      console.log('[processInput] Complete');
     }
 
     // ── Display ──────────────────────────────────────────────────────────────
     async function refreshDisplay() {
       try {
         const records = await getAllRows();
-        console.log('[refreshDisplay] Got', records.length, 'records from DB');
         records.sort((a, b) => a.insertedAt - b.insertedAt);
 
       updateDBCount(records.length);
@@ -601,13 +578,7 @@
 
       // Re-initialise Wowhead tooltips on the new content
       if (typeof $WowheadPower !== 'undefined') {
-        console.log('[Wowhead] Refreshing links...');
-        setTimeout(() => {
-          $WowheadPower.refreshLinks();
-          console.log('[Wowhead] Refresh complete');
-        }, 100);
-      } else {
-        console.warn('[Wowhead] $WowheadPower not found — tooltips may not work');
+        setTimeout(() => $WowheadPower.refreshLinks(), 100);
       }
       } catch (err) {
         console.error('[refreshDisplay] Error:', err);
@@ -674,7 +645,6 @@
 
     // Auto-process on paste (with delay to ensure text is inserted)
     document.getElementById('tsv-input').addEventListener('paste', () => {
-      console.log('[Paste Event] Data pasted, processing in 200ms...');
       setTimeout(processInput, 200);
     });
 
