@@ -325,11 +325,17 @@
 
     // Use player, date, and itemID as unique key for deduplication
     function rowKey(dataObj) {
-      return JSON.stringify({
-        player: dataObj.player,
-        date: dataObj.date,
-        itemID: dataObj.itemID
-      });
+      try {
+        const key = {
+          player: dataObj.player || '',
+          date: dataObj.date || '',
+          itemID: dataObj.itemID || ''
+        };
+        return JSON.stringify(key);
+      } catch (err) {
+        console.error('[rowKey] Error creating key:', err, 'Data:', dataObj);
+        throw err;
+      }
     }
 
     function addRowsToDB(dataObjects) {
@@ -339,18 +345,26 @@
         const store = tx.objectStore('rows');
 
         dataObjects.forEach((data, i) => {
-          const key = rowKey(data);
-          const req = store.add({ key, data, insertedAt: Date.now() + i });
-          req.onsuccess = () => added++;
-          req.onerror = e => {
-            if (e.target.error.name === 'ConstraintError') skipped++;
-            else console.warn('DB insert error:', e.target.error);
-            e.preventDefault(); // prevent transaction abort on duplicate
-          };
+          try {
+            const key = rowKey(data);
+            const req = store.add({ key, data, insertedAt: Date.now() + i });
+            req.onsuccess = () => added++;
+            req.onerror = e => {
+              if (e.target.error.name === 'ConstraintError') skipped++;
+              else console.warn('DB insert error:', e.target.error);
+              e.preventDefault(); // prevent transaction abort on duplicate
+            };
+          } catch (err) {
+            console.error('[addRowsToDB] Error with row', i, ':', err, 'Data:', data);
+            e.preventDefault();
+          }
         });
 
         tx.oncomplete = () => resolve({ added, skipped });
-        tx.onerror = () => reject(tx.error);
+        tx.onerror = () => {
+          console.error('[addRowsToDB] Transaction error:', tx.error);
+          reject(tx.error);
+        };
       });
     }
 
@@ -540,8 +554,10 @@
 
     // ── Display ──────────────────────────────────────────────────────────────
     async function refreshDisplay() {
-      const records = await getAllRows();
-      records.sort((a, b) => a.insertedAt - b.insertedAt);
+      try {
+        const records = await getAllRows();
+        console.log('[refreshDisplay] Got', records.length, 'records from DB');
+        records.sort((a, b) => a.insertedAt - b.insertedAt);
 
       updateDBCount(records.length);
 
@@ -579,6 +595,10 @@
         }, 100);
       } else {
         console.warn('[Wowhead] $WowheadPower not found — tooltips may not work');
+      }
+      } catch (err) {
+        console.error('[refreshDisplay] Error:', err);
+        showError('Error refreshing display: ' + (err?.message || err));
       }
     }
 
