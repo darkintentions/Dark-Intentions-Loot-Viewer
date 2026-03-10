@@ -493,7 +493,13 @@
 
       // Re-initialise Wowhead tooltips on the new content
       if (typeof $WowheadPower !== 'undefined') {
-        setTimeout(() => $WowheadPower.refreshLinks(), 100);
+        console.log('[Wowhead] Refreshing links...');
+        setTimeout(() => {
+          $WowheadPower.refreshLinks();
+          console.log('[Wowhead] Refresh complete');
+        }, 100);
+      } else {
+        console.warn('[Wowhead] $WowheadPower not found — tooltips may not work');
       }
     }
 
@@ -670,6 +676,15 @@
     }
 
     // ── Init ─────────────────────────────────────────────────────────────────
+    window.addEventListener('load', () => {
+      console.log('[Init] Page loaded, checking Wowhead...');
+      if (typeof $WowheadPower === 'undefined') {
+        console.warn('[Init] Wowhead script not loaded. This may block tooltips.');
+      } else {
+        console.log('[Init] Wowhead script loaded successfully');
+      }
+    });
+
     openDB()
       .then(d => { db = d; return migrateItemField(); })
       .then(migrateGearFields)
