@@ -267,11 +267,18 @@
     }
 
     /* ── CARD TABS ── */
+    .card-tabs-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0;
+      gap: 1rem;
+    }
+
     .card-tabs {
       display: flex;
       gap: 0.5rem;
-      border-bottom: 2px solid var(--border);
-      padding-bottom: 0;
     }
 
     .tab-btn {
@@ -295,6 +302,24 @@
     .tab-btn.active {
       color: var(--accent);
       border-bottom-color: var(--accent);
+    }
+
+    .boss-filter {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .boss-filter:focus {
+      border-color: var(--accent);
     }
 
     #output { min-height: 80px; }
@@ -332,10 +357,15 @@
     </div>
   </div>
 
-  <div id="card-tabs" class="card-tabs" style="display:none; margin-bottom: 1rem;">
-    <button class="tab-btn active" data-tab="gear" onclick="setCardTab('gear')">Gear</button>
-    <button class="tab-btn" data-tab="untradeable" onclick="setCardTab('untradeable')">Untradeable PL</button>
-    <button class="tab-btn" data-tab="professions" onclick="setCardTab('professions')">Professions</button>
+  <div id="card-tabs" class="card-tabs-container" style="display:none; margin-bottom: 1rem;">
+    <div class="card-tabs">
+      <button class="tab-btn active" data-tab="gear" onclick="setCardTab('gear')">Gear</button>
+      <button class="tab-btn" data-tab="untradeable" onclick="setCardTab('untradeable')">Untradeable PL</button>
+      <button class="tab-btn" data-tab="professions" onclick="setCardTab('professions')">Professions</button>
+    </div>
+    <select id="boss-filter" class="boss-filter" onchange="setBossFilter(this.value)">
+      <option value="">All Bosses</option>
+    </select>
   </div>
 
   <div id="output"></div>
@@ -428,6 +458,7 @@
     // ── UI Helpers ───────────────────────────────────────────────────────────
     let currentView = 'cards';
     let currentCardTab = 'gear';
+    let currentBossFilter = '';
 
     function showError(msg) {
       const el = document.getElementById('error');
@@ -628,6 +659,29 @@
             row.response !== 'Personal Loot - Non tradeable' && !professions.has(row['Armor Type'])
           );
         }
+
+        // Populate boss filter dropdown with unique bosses from filtered rows
+        const bossSet = new Set();
+        filteredRows.forEach(row => {
+          if (row.boss) bossSet.add(row.boss);
+        });
+        const sortedBosses = Array.from(bossSet).sort();
+
+        const bossSelect = document.getElementById('boss-filter');
+        const currentValue = bossSelect.value;
+        bossSelect.innerHTML = '<option value="">All Bosses</option>';
+        sortedBosses.forEach(boss => {
+          const option = document.createElement('option');
+          option.value = boss;
+          option.textContent = boss;
+          bossSelect.appendChild(option);
+        });
+        bossSelect.value = currentValue; // Restore previous selection if still valid
+
+        // Further filter by boss if one is selected
+        if (currentBossFilter) {
+          filteredRows = filteredRows.filter(row => row.boss === currentBossFilter);
+        }
       } else {
         tabsEl.style.display = 'none';
       }
@@ -655,6 +709,7 @@
 
     function setCardTab(tab) {
       currentCardTab = tab;
+      currentBossFilter = ''; // Reset boss filter when changing tabs
       // Update active tab styling
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -663,6 +718,11 @@
         }
       });
       // Re-render with filtered rows
+      refreshDisplay();
+    }
+
+    function setBossFilter(boss) {
+      currentBossFilter = boss;
       refreshDisplay();
     }
 
