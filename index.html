@@ -463,6 +463,76 @@
     .logout-btn:hover {
       background: var(--surface2);
     }
+
+    /* ── DATE GROUP HEADERS ── */
+    .date-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .date-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+      margin-bottom: 0.75rem;
+    }
+
+    .date-header:hover {
+      background: var(--border);
+    }
+
+    .date-header-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      transition: transform 0.2s;
+      color: var(--text-dim);
+      font-size: 1rem;
+    }
+
+    .date-header.collapsed .date-header-toggle {
+      transform: rotate(-90deg);
+    }
+
+    .date-header-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .date-header-count {
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      background: var(--bg);
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+    }
+
+    .date-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+      max-height: 10000px;
+      opacity: 1;
+      overflow: hidden;
+    }
+
+    .date-cards.hidden {
+      max-height: 0;
+      opacity: 0;
+      margin-bottom: 0;
+    }
   </style>
   <script>const whTooltips = {colorLinks: true, iconizeLinks: true, renameLinks: true};</script>
   <script src="https://wow.zamimg.com/js/tooltips.js"></script>
@@ -1176,15 +1246,68 @@
     }
 
     function renderCards(headers, rows) {
-      const cards = rows.map(row => {
-        const fields = headers.map(h => `
-          <div class="card-field">
-            <span class="field-key">${esc(h)}</span>
-            <span class="field-value">${cellContent(row[h] ?? '')}</span>
-          </div>`).join('');
-        return `<div class="card">${fields}</div>`;
+      // Group rows by date
+      const groupedByDate = {};
+      rows.forEach(row => {
+        const date = row.date || 'No Date';
+        if (!groupedByDate[date]) {
+          groupedByDate[date] = [];
+        }
+        groupedByDate[date].push(row);
+      });
+
+      // Sort dates (most recent first)
+      const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
+        if (a === 'No Date') return 1;
+        if (b === 'No Date') return -1;
+        return new Date(b) - new Date(a);
+      });
+
+      // Generate HTML for each date group
+      const dateGroups = sortedDates.map(date => {
+        const cardsForDate = groupedByDate[date];
+        const cardsHTML = cardsForDate.map(row => {
+          const fields = headers.map(h => `
+            <div class="card-field">
+              <span class="field-key">${esc(h)}</span>
+              <span class="field-value">${cellContent(row[h] ?? '')}</span>
+            </div>`).join('');
+          return `<div class="card">${fields}</div>`;
+        }).join('');
+
+        const dateId = 'date-' + (date === 'No Date' ? 'no-date' : date.replace(/\//g, '-'));
+        const displayDate = date === 'No Date' ? 'No Date' : new Date(date + ' 00:00').toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+
+        return `
+          <div class="date-group">
+            <div class="date-header" id="${dateId}-header" onclick="toggleDateGroup('${dateId}')">
+              <div class="date-header-toggle">▼</div>
+              <div class="date-header-title">${esc(displayDate)}</div>
+              <div class="date-header-count">${cardsForDate.length} item${cardsForDate.length !== 1 ? 's' : ''}</div>
+            </div>
+            <div class="date-cards" id="${dateId}-cards">
+              ${cardsHTML}
+            </div>
+          </div>
+        `;
       }).join('');
-      return `<div class="card-list">${cards}</div>`;
+
+      return `<div class="card-list">${dateGroups}</div>`;
+    }
+
+    function toggleDateGroup(dateId) {
+      const header = document.getElementById(dateId + '-header');
+      const cards = document.getElementById(dateId + '-cards');
+
+      if (header && cards) {
+        header.classList.toggle('collapsed');
+        cards.classList.toggle('hidden');
+      }
     }
 
     function esc(str) {
