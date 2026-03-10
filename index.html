@@ -333,14 +333,164 @@
     }
 
     #output { min-height: 80px; }
+
+    /* ── HEADER CONTAINER ── */
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+    }
+
+    .btn-login {
+      padding: 0.55rem 1.2rem;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s;
+      font-family: inherit;
+      background: var(--accent);
+      color: #fff;
+      white-space: nowrap;
+      align-self: center;
+    }
+
+    .btn-login:hover { background: var(--accent-dim); }
+
+    /* ── LOGIN MODAL ── */
+    .login-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-modal.active {
+      display: flex;
+    }
+
+    .login-modal-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      max-width: 400px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .login-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    .login-modal-header h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s;
+    }
+
+    .close-btn:hover {
+      color: var(--text);
+    }
+
+    .login-modal-body {
+      text-align: center;
+    }
+
+    .login-modal-body p {
+      color: var(--text-dim);
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    #google-signin-button {
+      display: flex;
+      justify-content: center;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+    }
+
+    .user-info-name {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .logout-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+    }
+
+    .logout-btn:hover {
+      background: var(--surface2);
+    }
   </style>
   <script>const whTooltips = {colorLinks: true, iconizeLinks: true, renameLinks: true};</script>
   <script src="https://wow.zamimg.com/js/tooltips.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
-  <h1>Dark Intentions Loot Viewer</h1>
-  <p class="subtitle">Paste TSV data to add it to the local database. Duplicate rows are automatically skipped.</p>
+  <div class="header-container">
+    <div>
+      <h1>Dark Intentions Loot Viewer</h1>
+      <p class="subtitle">Paste TSV data to add it to the local database. Duplicate rows are automatically skipped.</p>
+    </div>
+    <button class="btn-login" id="login-btn" onclick="handleLoginClick()">Log In</button>
+  </div>
+
+  <!-- Login Modal -->
+  <div id="login-modal" class="login-modal">
+    <div class="login-modal-content">
+      <div class="login-modal-header">
+        <h2>Sign In</h2>
+        <button class="close-btn" onclick="closeLoginModal()">&times;</button>
+      </div>
+      <div class="login-modal-body">
+        <p>Sign in with your Google account to continue</p>
+        <div id="google-signin-button"></div>
+      </div>
+    </div>
+  </div>
 
   <div class="db-bar">
     <span class="db-count" id="db-count">Loading…</span>
@@ -386,6 +536,151 @@
   <div id="output"></div>
 
   <script>
+    // ── GOOGLE AUTHENTICATION ─────────────────────────────────────────────────
+    const GOOGLE_CLIENT_ID = '123456789-abc123def456.apps.googleusercontent.com'; // Replace with your actual Client ID
+    let currentUser = null;
+
+    function handleLoginClick() {
+      const modal = document.getElementById('login-modal');
+      modal.classList.add('active');
+    }
+
+    function closeLoginModal() {
+      const modal = document.getElementById('login-modal');
+      modal.classList.remove('active');
+    }
+
+    // Close modal when clicking outside of it
+    document.addEventListener('click', (e) => {
+      const modal = document.getElementById('login-modal');
+      if (e.target === modal) {
+        closeLoginModal();
+      }
+    });
+
+    function initializeGoogleSignIn() {
+      if (typeof google === 'undefined') {
+        console.warn('[Auth] Google API not loaded yet');
+        return;
+      }
+
+      try {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleGoogleSignInResponse,
+          auto_select: false
+        });
+
+        google.accounts.id.renderButton(
+          document.getElementById('google-signin-button'),
+          {
+            type: 'standard',
+            size: 'large',
+            theme: 'filled_black',
+            text: 'signin_with'
+          }
+        );
+
+        console.log('[Auth] Google Sign-In initialized');
+      } catch (err) {
+        console.error('[Auth] Failed to initialize Google Sign-In:', err);
+      }
+    }
+
+    function handleGoogleSignInResponse(response) {
+      if (response.credential) {
+        // Decode the JWT token (basic decoding, not verification)
+        const token = response.credential;
+        try {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split('')
+              .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join('')
+          );
+          const userInfo = JSON.parse(jsonPayload);
+
+          currentUser = {
+            id: userInfo.sub,
+            email: userInfo.email,
+            name: userInfo.name,
+            picture: userInfo.picture,
+            token: token
+          };
+
+          // Store user info in localStorage
+          localStorage.setItem('loot_viewer_user', JSON.stringify(currentUser));
+
+          console.log('[Auth] User signed in:', userInfo.email);
+
+          closeLoginModal();
+          updateLoginUI();
+        } catch (err) {
+          console.error('[Auth] Error decoding token:', err);
+          showError('Error processing sign-in. Please try again.');
+        }
+      }
+    }
+
+    function updateLoginUI() {
+      const loginBtn = document.getElementById('login-btn');
+
+      if (currentUser) {
+        // Show user info instead of login button
+        loginBtn.innerHTML = `
+          <div class="user-info">
+            <span class="user-info-name">${esc(currentUser.name)}</span>
+            <button class="logout-btn" onclick="handleLogout(event)">Logout</button>
+          </div>
+        `;
+        loginBtn.style.padding = '0.5rem 1rem';
+        loginBtn.style.display = 'flex';
+        loginBtn.style.alignItems = 'center';
+        loginBtn.style.gap = '0.5rem';
+        loginBtn.style.cursor = 'default';
+        loginBtn.onclick = null; // Remove click handler
+      } else {
+        loginBtn.innerHTML = 'Log In';
+        loginBtn.style.padding = '0.55rem 1.2rem';
+        loginBtn.style.display = 'block';
+        loginBtn.onclick = () => handleLoginClick();
+      }
+    }
+
+    function handleLogout(event) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (typeof google !== 'undefined') {
+        google.accounts.id.disableAutoSelect();
+      }
+
+      currentUser = null;
+      localStorage.removeItem('loot_viewer_user');
+
+      updateLoginUI();
+      closeLoginModal();
+      showNotify('Signed out successfully', 'success');
+
+      console.log('[Auth] User signed out');
+    }
+
+    function restoreUserSession() {
+      const saved = localStorage.getItem('loot_viewer_user');
+      if (saved) {
+        try {
+          currentUser = JSON.parse(saved);
+          console.log('[Auth] Session restored for:', currentUser.email);
+          updateLoginUI();
+        } catch (err) {
+          console.error('[Auth] Error restoring session:', err);
+          localStorage.removeItem('loot_viewer_user');
+        }
+      }
+    }
+
     // ── IndexedDB ────────────────────────────────────────────────────────────
     const DB_NAME = 'TSVViewerDB';
     const DB_VERSION = 1;
@@ -1006,6 +1301,12 @@
       } else {
         console.log('[Init] Wowhead script loaded successfully');
       }
+
+      // Initialize Google Sign-In
+      setTimeout(() => {
+        restoreUserSession();
+        initializeGoogleSignIn();
+      }, 500);
     });
 
     openDB()
