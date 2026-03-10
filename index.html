@@ -846,11 +846,7 @@
 
       const availableSeasons = getAvailableSeasons(rows);
 
-      if (availableSeasons.length === 0) {
-        container.style.display = 'none';
-        return;
-      }
-
+      // Always show the container
       container.style.display = 'flex';
 
       // Save current selection
