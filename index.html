@@ -484,6 +484,9 @@
       out.innerHTML = currentView === 'table'
         ? renderTable(headers, rows)
         : renderCards(headers, rows);
+
+      // Re-initialise Wowhead tooltips on the new content
+      if (typeof $WowheadPower !== 'undefined') $WowheadPower.refreshLinks();
     }
 
     function setView(view) {
@@ -492,10 +495,22 @@
       refreshDisplay();
     }
 
+    function wowheadLink(row, h) {
+      const itemId = row['itemID'] || row['itemid'] || '';
+      const name = esc(row[h] ?? '');
+      if (!itemId) return name || '<span style="opacity:0.4">—</span>';
+      return `<a href="https://www.wowhead.com/item=${esc(itemId)}">${name}</a>`;
+    }
+
+    function cellValue(row, h) {
+      if (h.toLowerCase() === 'item') return wowheadLink(row, h);
+      return esc(row[h] ?? '') || '<span style="opacity:0.4">—</span>';
+    }
+
     function renderTable(headers, rows) {
       const ths = headers.map(h => `<th>${esc(h)}</th>`).join('');
       const trs = rows.map(row => {
-        const tds = headers.map(h => `<td>${esc(row[h] ?? '')}</td>`).join('');
+        const tds = headers.map(h => `<td>${cellValue(row, h)}</td>`).join('');
         return `<tr>${tds}</tr>`;
       }).join('');
       return `<div class="table-wrapper"><table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`;
@@ -506,7 +521,7 @@
         const fields = headers.map(h => `
           <div class="card-field">
             <span class="field-key">${esc(h)}</span>
-            <span class="field-value">${esc(row[h] ?? '') || '<span style="opacity:0.4">—</span>'}</span>
+            <span class="field-value">${cellValue(row, h)}</span>
           </div>`).join('');
         return `<div class="card">${fields}</div>`;
       }).join('');
