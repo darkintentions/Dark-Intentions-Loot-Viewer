@@ -538,9 +538,45 @@
       setTimeout(processInput, 50);
     });
 
+    // ── One-time migration: clean ITEM field on existing rows ─────────────────
+    async function migrateItemField() {
+      if (localStorage.getItem('tsv_item_cleanup_v1')) return;
+
+      const records = await getAllRows();
+      const toFix = records.filter(r => {
+        const key = Object.keys(r.data).find(k => k.toLowerCase() === 'item');
+        return key && r.data[key].includes('"');
+      });
+
+      if (toFix.length > 0) {
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction('rows', 'readwrite');
+          const store = tx.objectStore('rows');
+
+          toFix.forEach(record => {
+            const itemKey = Object.keys(record.data).find(k => k.toLowerCase() === 'item');
+            const val = record.data[itemKey];
+            const first = val.indexOf('"');
+            const second = val.indexOf('"', first + 1);
+            if (first !== -1 && second !== -1) {
+              const newData = { ...record.data, [itemKey]: val.substring(first + 1, second) };
+              store.delete(record.key);
+              store.add({ key: rowKey(newData), data: newData, insertedAt: record.insertedAt });
+            }
+          });
+
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error);
+        });
+      }
+
+      localStorage.setItem('tsv_item_cleanup_v1', '1');
+    }
+
     // ── Init ─────────────────────────────────────────────────────────────────
     openDB()
-      .then(d => { db = d; return refreshDisplay(); })
+      .then(d => { db = d; return migrateItemField(); })
+      .then(refreshDisplay)
       .catch(err => showError('Failed to open database: ' + err.message));
   </script>
 
