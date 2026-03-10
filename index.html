@@ -817,7 +817,10 @@
     }
 
     function getAvailableSeasons(rows) {
-      if (!seasonsData) return [];
+      if (!seasonsData) {
+        console.log('[Seasons] seasonsData not loaded yet');
+        return [];
+      }
 
       const availableSeasons = [];
 
@@ -825,11 +828,17 @@
         const startDate = new Date(season.startDate);
         const endDate = new Date(season.endDate);
 
+        console.log(`[Seasons] Checking ${season.name}: ${season.startDate} to ${season.endDate}`);
+
         // Check if any rows fall within this season's date range
         const hasCards = rows.some(row => {
           if (!row.date) return false;
           const rowDate = new Date(row.date);
-          return rowDate >= startDate && rowDate <= endDate;
+          const inRange = rowDate >= startDate && rowDate <= endDate;
+          if (inRange) {
+            console.log(`[Seasons] Found card in ${season.name}: ${row.date}`);
+          }
+          return inRange;
         });
 
         if (hasCards) {
@@ -844,7 +853,12 @@
       const select = document.getElementById('season-filter');
       const container = document.getElementById('season-filter-container');
 
+      console.log('[Seasons] updateSeasonFilter called with', rows.length, 'rows');
+      console.log('[Seasons] seasonsData:', seasonsData);
+
       const availableSeasons = getAvailableSeasons(rows);
+
+      console.log('[Seasons] Available seasons:', availableSeasons);
 
       // Always show the container
       container.style.display = 'flex';
@@ -863,6 +877,8 @@
 
       // Restore selection if still valid
       select.value = currentValue;
+
+      console.log('[Seasons] Season filter updated. Available:', availableSeasons.length);
     }
 
     function filterBySeasonDate(row) {
