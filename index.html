@@ -322,6 +322,11 @@
       border-color: var(--accent);
     }
 
+    .filter-dropdowns {
+      display: flex;
+      gap: 0.75rem;
+    }
+
     #output { min-height: 80px; }
   </style>
   <script>const whTooltips = {colorLinks: true, iconizeLinks: true, renameLinks: true};</script>
@@ -363,9 +368,14 @@
       <button class="tab-btn" data-tab="untradeable" onclick="setCardTab('untradeable')">Untradeable PL</button>
       <button class="tab-btn" data-tab="professions" onclick="setCardTab('professions')">Professions</button>
     </div>
-    <select id="boss-filter" class="boss-filter" onchange="setBossFilter(this.value)">
-      <option value="">All Bosses</option>
-    </select>
+    <div class="filter-dropdowns">
+      <select id="boss-filter" class="boss-filter" onchange="setBossFilter(this.value)">
+        <option value="">All Bosses</option>
+      </select>
+      <select id="response-filter" class="boss-filter" onchange="setResponseFilter(this.value)">
+        <option value="">All Responses</option>
+      </select>
+    </div>
   </div>
 
   <div id="output"></div>
@@ -459,6 +469,7 @@
     let currentView = 'cards';
     let currentCardTab = 'gear';
     let currentBossFilter = '';
+    let currentResponseFilter = '';
 
     function showError(msg) {
       const el = document.getElementById('error');
@@ -656,21 +667,22 @@
         let untradeableRowsUnfiltered = rows.filter(row => row.response === 'Personal Loot - Non tradeable');
         let professionsRowsUnfiltered = rows.filter(row => professions.has(row['Armor Type']));
 
-        // Populate boss filter dropdown with unique bosses from current tab only (before applying boss filter)
-        const tabRowsForBosses = currentCardTab === 'untradeable'
+        // Populate boss and response filter dropdowns from current tab only (before applying filters)
+        const tabRowsForFilters = currentCardTab === 'untradeable'
           ? untradeableRowsUnfiltered
           : currentCardTab === 'professions'
           ? professionsRowsUnfiltered
           : gearRowsUnfiltered;
 
+        // Boss filter
         const bossSet = new Set();
-        tabRowsForBosses.forEach(row => {
+        tabRowsForFilters.forEach(row => {
           if (row.boss) bossSet.add(row.boss);
         });
         const sortedBosses = Array.from(bossSet).sort();
 
         const bossSelect = document.getElementById('boss-filter');
-        const currentValue = bossSelect.value;
+        const currentBossValue = bossSelect.value;
         bossSelect.innerHTML = '<option value="">All Bosses</option>';
         sortedBosses.forEach(boss => {
           const option = document.createElement('option');
@@ -678,9 +690,27 @@
           option.textContent = boss;
           bossSelect.appendChild(option);
         });
-        bossSelect.value = currentValue; // Restore previous selection if still valid
+        bossSelect.value = currentBossValue; // Restore previous selection if still valid
 
-        // Now apply boss filter to all row sets if one is selected
+        // Response filter
+        const responseSet = new Set();
+        tabRowsForFilters.forEach(row => {
+          if (row.response) responseSet.add(row.response);
+        });
+        const sortedResponses = Array.from(responseSet).sort();
+
+        const responseSelect = document.getElementById('response-filter');
+        const currentResponseValue = responseSelect.value;
+        responseSelect.innerHTML = '<option value="">All Responses</option>';
+        sortedResponses.forEach(response => {
+          const option = document.createElement('option');
+          option.value = response;
+          option.textContent = response;
+          responseSelect.appendChild(option);
+        });
+        responseSelect.value = currentResponseValue; // Restore previous selection if still valid
+
+        // Now apply boss and response filters to all row sets if one is selected
         let gearRows = gearRowsUnfiltered;
         let untradeableRows = untradeableRowsUnfiltered;
         let professionsRows = professionsRowsUnfiltered;
@@ -689,6 +719,12 @@
           gearRows = gearRows.filter(row => row.boss === currentBossFilter);
           untradeableRows = untradeableRows.filter(row => row.boss === currentBossFilter);
           professionsRows = professionsRows.filter(row => row.boss === currentBossFilter);
+        }
+
+        if (currentResponseFilter) {
+          gearRows = gearRows.filter(row => row.response === currentResponseFilter);
+          untradeableRows = untradeableRows.filter(row => row.response === currentResponseFilter);
+          professionsRows = professionsRows.filter(row => row.response === currentResponseFilter);
         }
 
         // Update tab button text with counts
@@ -740,9 +776,9 @@
         }
       });
 
-      // Check if current boss filter has any results in the new tab
-      // If not, reset the boss filter
-      if (currentBossFilter) {
+      // Check if current boss/response filters have any results in the new tab
+      // If not, reset the filters
+      if (currentBossFilter || currentResponseFilter) {
         // Get all rows and filter by tab type
         openDB().then(d => {
           db = d;
@@ -762,12 +798,21 @@
             }
 
             // Check if any rows match the current boss filter
-            const hasResults = tabRows.some(row => row.boss === currentBossFilter);
+            if (currentBossFilter) {
+              const hasBossResults = tabRows.some(row => row.boss === currentBossFilter);
+              if (!hasBossResults) {
+                currentBossFilter = ''; // Reset filter if no results
+                document.getElementById('boss-filter').value = '';
+              }
+            }
 
-            if (!hasResults) {
-              currentBossFilter = ''; // Reset filter if no results
-              // Also reset the dropdown to "All Bosses"
-              document.getElementById('boss-filter').value = '';
+            // Check if any rows match the current response filter
+            if (currentResponseFilter) {
+              const hasResponseResults = tabRows.some(row => row.response === currentResponseFilter);
+              if (!hasResponseResults) {
+                currentResponseFilter = ''; // Reset filter if no results
+                document.getElementById('response-filter').value = '';
+              }
             }
 
             refreshDisplay();
@@ -780,6 +825,11 @@
 
     function setBossFilter(boss) {
       currentBossFilter = boss;
+      refreshDisplay();
+    }
+
+    function setResponseFilter(response) {
+      currentResponseFilter = response;
       refreshDisplay();
     }
 
