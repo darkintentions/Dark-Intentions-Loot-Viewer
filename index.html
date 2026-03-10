@@ -766,6 +766,8 @@
 
             if (!hasResults) {
               currentBossFilter = ''; // Reset filter if no results
+              // Also reset the dropdown to "All Bosses"
+              document.getElementById('boss-filter').value = '';
             }
 
             refreshDisplay();
