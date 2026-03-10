@@ -369,7 +369,7 @@
     }
 
     // ── Hidden columns (stored in DB but not displayed) ──────────────────────
-    const HIDDEN_COLS = new Set(['itemString', 'owner', 'votes', 'itemid', 'itemID', 'responseID', 'roletype', 'isAwardReason']);
+    const HIDDEN_COLS = new Set(['itemString', 'owner', 'votes', 'itemid', 'itemID', 'responseID', 'roletype', 'isAwardReason', '_gear1_id', '_gear2_id']);
 
     // ── UI Helpers ───────────────────────────────────────────────────────────
     let currentView = 'cards';
@@ -424,15 +424,19 @@
           const obj = {};
           headers.forEach((h, i) => {
             const key = h.trim() || `Col${i + 1}`;
-            let val = vals[i] ?? '';
-            if (key.toLowerCase() === 'item') {
-              const first = val.indexOf('"');
-              const second = val.indexOf('"', first + 1);
-              if (first !== -1 && second !== -1) {
-                val = val.substring(first + 1, second);
-              }
+            const raw = vals[i] ?? '';
+            const lk = key.toLowerCase();
+            if (lk === 'item') {
+              obj[key] = extractBetweenQuotes(raw);
+            } else if (lk === 'gear1') {
+              obj['_gear1_id'] = extractIdBeforeQuote(raw);
+              obj[key] = extractBetweenQuotes(raw);
+            } else if (lk === 'gear2') {
+              obj['_gear2_id'] = extractIdBeforeQuote(raw);
+              obj[key] = extractBetweenQuotes(raw);
+            } else {
+              obj[key] = raw;
             }
-            obj[key] = val;
           });
           return obj;
         });
@@ -495,16 +499,33 @@
       refreshDisplay();
     }
 
-    function wowheadLink(row, h) {
-      const itemId = row['itemID'] || row['itemid'] || '';
+    function extractBetweenQuotes(val) {
+      const first = val.indexOf('"');
+      const second = val.indexOf('"', first + 1);
+      return (first !== -1 && second !== -1) ? val.substring(first + 1, second) : val;
+    }
+
+    function extractIdBeforeQuote(val) {
+      const first = val.indexOf('"');
+      if (first === -1) return '';
+      const match = val.substring(0, first).match(/\d+/);
+      return match ? match[0] : '';
+    }
+
+    function wowheadLink(row, h, idField) {
+      const itemId = row[idField] || '';
       const name = esc(row[h] ?? '');
       if (!itemId) return name || '<span style="opacity:0.4">—</span>';
       return `<a href="https://www.wowhead.com/item=${esc(itemId)}">${name}</a>`;
     }
 
     function cellValue(row, h) {
-      if (h.toLowerCase() === 'item') return wowheadLink(row, h);
-      return esc(row[h] ?? '') || '<span style="opacity:0.4">—</span>';
+      switch (h.toLowerCase()) {
+        case 'item':  return wowheadLink(row, h, row['itemID'] ? 'itemID' : 'itemid');
+        case 'gear1': return wowheadLink(row, h, '_gear1_id');
+        case 'gear2': return wowheadLink(row, h, '_gear2_id');
+        default:      return esc(row[h] ?? '') || '<span style="opacity:0.4">—</span>';
+      }
     }
 
     function renderTable(headers, rows) {
@@ -588,9 +609,49 @@
       localStorage.setItem('tsv_item_cleanup_v1', '1');
     }
 
+    // ── One-time migration: clean GEAR1/GEAR2 fields on existing rows ─────────
+    async function migrateGearFields() {
+      if (localStorage.getItem('tsv_gear_cleanup_v1')) return;
+
+      const records = await getAllRows();
+      const toFix = records.filter(r =>
+        ['gear1', 'gear2'].some(g => {
+          const k = Object.keys(r.data).find(k => k.toLowerCase() === g);
+          return k && r.data[k].includes('"');
+        })
+      );
+
+      if (toFix.length > 0) {
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction('rows', 'readwrite');
+          const store = tx.objectStore('rows');
+
+          toFix.forEach(record => {
+            const newData = { ...record.data };
+            ['gear1', 'gear2'].forEach(g => {
+              const k = Object.keys(newData).find(k => k.toLowerCase() === g);
+              if (k && newData[k].includes('"')) {
+                const raw = newData[k];
+                newData[`_${g}_id`] = extractIdBeforeQuote(raw);
+                newData[k] = extractBetweenQuotes(raw);
+              }
+            });
+            store.delete(record.key);
+            store.add({ key: rowKey(newData), data: newData, insertedAt: record.insertedAt });
+          });
+
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error);
+        });
+      }
+
+      localStorage.setItem('tsv_gear_cleanup_v1', '1');
+    }
+
     // ── Init ─────────────────────────────────────────────────────────────────
     openDB()
       .then(d => { db = d; return migrateItemField(); })
+      .then(migrateGearFields)
       .then(refreshDisplay)
       .catch(err => showError('Failed to open database: ' + err.message));
   </script>
