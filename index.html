@@ -678,16 +678,15 @@
           filteredRows = gearRows;
         }
 
-        // Populate boss filter dropdown with unique bosses from all unfiltered tab rows
-        const allTabRows = [
-          ...rows.filter(row =>
-            row.response !== 'Personal Loot - Non tradeable' && !professions.has(row['Armor Type'])
-          ),
-          ...rows.filter(row => row.response === 'Personal Loot - Non tradeable'),
-          ...rows.filter(row => professions.has(row['Armor Type']))
-        ];
+        // Populate boss filter dropdown with unique bosses from current tab only
+        const tabRowsForBosses = currentCardTab === 'untradeable'
+          ? untradeableRows
+          : currentCardTab === 'professions'
+          ? professionsRows
+          : gearRows;
+
         const bossSet = new Set();
-        allTabRows.forEach(row => {
+        tabRowsForBosses.forEach(row => {
           if (row.boss) bossSet.add(row.boss);
         });
         const sortedBosses = Array.from(bossSet).sort();
