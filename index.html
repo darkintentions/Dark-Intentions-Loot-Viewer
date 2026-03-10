@@ -649,14 +649,42 @@
       if (currentView === 'cards') {
         tabsEl.style.display = 'flex';
 
-        // Calculate counts for each tab
-        let gearRows = rows.filter(row =>
+        // Calculate unfiltered rows for each tab
+        let gearRowsUnfiltered = rows.filter(row =>
           row.response !== 'Personal Loot - Non tradeable' && !professions.has(row['Armor Type'])
         );
-        let untradeableRows = rows.filter(row => row.response === 'Personal Loot - Non tradeable');
-        let professionsRows = rows.filter(row => professions.has(row['Armor Type']));
+        let untradeableRowsUnfiltered = rows.filter(row => row.response === 'Personal Loot - Non tradeable');
+        let professionsRowsUnfiltered = rows.filter(row => professions.has(row['Armor Type']));
 
-        // Apply boss filter to all row sets if one is selected
+        // Populate boss filter dropdown with unique bosses from current tab only (before applying boss filter)
+        const tabRowsForBosses = currentCardTab === 'untradeable'
+          ? untradeableRowsUnfiltered
+          : currentCardTab === 'professions'
+          ? professionsRowsUnfiltered
+          : gearRowsUnfiltered;
+
+        const bossSet = new Set();
+        tabRowsForBosses.forEach(row => {
+          if (row.boss) bossSet.add(row.boss);
+        });
+        const sortedBosses = Array.from(bossSet).sort();
+
+        const bossSelect = document.getElementById('boss-filter');
+        const currentValue = bossSelect.value;
+        bossSelect.innerHTML = '<option value="">All Bosses</option>';
+        sortedBosses.forEach(boss => {
+          const option = document.createElement('option');
+          option.value = boss;
+          option.textContent = boss;
+          bossSelect.appendChild(option);
+        });
+        bossSelect.value = currentValue; // Restore previous selection if still valid
+
+        // Now apply boss filter to all row sets if one is selected
+        let gearRows = gearRowsUnfiltered;
+        let untradeableRows = untradeableRowsUnfiltered;
+        let professionsRows = professionsRowsUnfiltered;
+
         if (currentBossFilter) {
           gearRows = gearRows.filter(row => row.boss === currentBossFilter);
           untradeableRows = untradeableRows.filter(row => row.boss === currentBossFilter);
@@ -677,30 +705,6 @@
           // 'gear' tab: exclude both untradeable and professions
           filteredRows = gearRows;
         }
-
-        // Populate boss filter dropdown with unique bosses from current tab only
-        const tabRowsForBosses = currentCardTab === 'untradeable'
-          ? untradeableRows
-          : currentCardTab === 'professions'
-          ? professionsRows
-          : gearRows;
-
-        const bossSet = new Set();
-        tabRowsForBosses.forEach(row => {
-          if (row.boss) bossSet.add(row.boss);
-        });
-        const sortedBosses = Array.from(bossSet).sort();
-
-        const bossSelect = document.getElementById('boss-filter');
-        const currentValue = bossSelect.value;
-        bossSelect.innerHTML = '<option value="">All Bosses</option>';
-        sortedBosses.forEach(boss => {
-          const option = document.createElement('option');
-          option.value = boss;
-          option.textContent = boss;
-          bossSelect.appendChild(option);
-        });
-        bossSelect.value = currentValue; // Restore previous selection if still valid
       } else {
         tabsEl.style.display = 'none';
       }
