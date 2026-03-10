@@ -778,6 +778,17 @@
       font-weight: 500;
     }
 
+    .item-name a {
+      color: #ffffff;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .item-name a:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
     .item-boss {
       color: var(--text-dim);
     }
@@ -1343,7 +1354,9 @@
 
                       return `
                         <div class="item-row">
-                          <div class="item-cell item-name" ${itemId ? `data-wowhead="item=${itemId}"` : ''}>${esc(itemDisplayName)}</div>
+                          <div class="item-cell item-name">
+                            ${itemId ? `<a href="https://www.wowhead.com/item=${itemId}" data-wowhead="item=${itemId}">${esc(itemDisplayName)}</a>` : esc(itemDisplayName)}
+                          </div>
                           <div class="item-cell item-boss">${esc(item.boss || '—')}</div>
                           <div class="item-cell item-response">${esc(item.response || '—')}</div>
                           <div class="item-cell item-date">${esc(item.date || '—')}</div>
@@ -1358,9 +1371,9 @@
         `;
         container.innerHTML = rosterHTML;
 
-        // Reinitialize Wowhead tooltips
-        if (window.WowheadPower) {
-          window.WowheadPower.refreshLinks();
+        // Reinitialize Wowhead tooltips on dynamically added content
+        if (window.$WowheadPower) {
+          window.$WowheadPower.refreshLinks();
         }
       } catch (err) {
         console.error('[Roster] Error loading roster:', err);
