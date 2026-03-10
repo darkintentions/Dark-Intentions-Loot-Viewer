@@ -429,11 +429,13 @@
             if (lk === 'item') {
               obj[key] = extractBetweenQuotes(raw);
             } else if (lk === 'gear1') {
-              obj['_gear1_id'] = extractIdBeforeQuote(raw);
+              obj['_gear1_id'] = extractItemId(raw);
               obj[key] = extractBetweenQuotes(raw);
+              console.log('[GEAR1] raw:', raw, '→ id:', obj['_gear1_id'], 'name:', obj[key]);
             } else if (lk === 'gear2') {
-              obj['_gear2_id'] = extractIdBeforeQuote(raw);
+              obj['_gear2_id'] = extractItemId(raw);
               obj[key] = extractBetweenQuotes(raw);
+              console.log('[GEAR2] raw:', raw, '→ id:', obj['_gear2_id'], 'name:', obj[key]);
             } else {
               obj[key] = raw;
             }
@@ -505,16 +507,20 @@
       return (first !== -1 && second !== -1) ? val.substring(first + 1, second) : val;
     }
 
-    function extractIdBeforeQuote(val) {
-      const first = val.indexOf('"');
-      if (first === -1) return '';
-      const prefix = val.substring(0, first);
-      // WoW item link format: |Hitem:12345:0:0:... — match specifically after "item:"
-      const itemMatch = prefix.match(/[Ii]tem:(\d+)/);
+    function extractItemId(val) {
+      // 1. WoW item link: item:12345 anywhere in the string
+      const itemMatch = val.match(/[Ii]tem:(\d+)/);
       if (itemMatch) return itemMatch[1];
-      // Fallback: first standalone whole number
-      const numMatch = prefix.match(/\b(\d+)\b/);
-      return numMatch ? numMatch[1] : '';
+      // 2. Entire value is just a number
+      const numOnly = val.trim().match(/^(\d+)$/);
+      if (numOnly) return numOnly[1];
+      // 3. Number before the first quote
+      const first = val.indexOf('"');
+      if (first !== -1) {
+        const numMatch = val.substring(0, first).match(/\b(\d+)\b/);
+        if (numMatch) return numMatch[1];
+      }
+      return '';
     }
 
     function wowheadLink(row, h, idField) {
@@ -616,7 +622,7 @@
 
     // ── One-time migration: clean GEAR1/GEAR2 fields on existing rows ─────────
     async function migrateGearFields() {
-      if (localStorage.getItem('tsv_gear_cleanup_v2')) return;
+      if (localStorage.getItem('tsv_gear_cleanup_v3')) return;
 
       const records = await getAllRows();
       // Re-process any row that has a GEAR1/GEAR2 field — catches both raw and
@@ -640,12 +646,12 @@
               const raw = newData[k];
               if (raw.includes('"')) {
                 // Raw value still has quotes — extract ID and name
-                newData[`_${g}_id`] = extractIdBeforeQuote(raw);
+                newData[`_${g}_id`] = extractItemId(raw);
                 newData[k] = extractBetweenQuotes(raw);
               } else {
                 // Already cleaned — re-run ID extraction on original stored value
                 // (ID may have been wrong from old regex; try again on current value)
-                newData[`_${g}_id`] = extractIdBeforeQuote(raw + '"');
+                newData[`_${g}_id`] = extractItemId(raw + '"');
               }
             });
             store.delete(record.key);
@@ -657,7 +663,7 @@
         });
       }
 
-      localStorage.setItem('tsv_gear_cleanup_v2', '1');
+      localStorage.setItem('tsv_gear_cleanup_v3', '1');
     }
 
     // ── Init ─────────────────────────────────────────────────────────────────
