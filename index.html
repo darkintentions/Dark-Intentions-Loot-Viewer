@@ -335,6 +335,7 @@
   <div id="card-tabs" class="card-tabs" style="display:none; margin-bottom: 1rem;">
     <button class="tab-btn active" data-tab="gear" onclick="setCardTab('gear')">Gear</button>
     <button class="tab-btn" data-tab="untradeable" onclick="setCardTab('untradeable')">Untradeable PL</button>
+    <button class="tab-btn" data-tab="professions" onclick="setCardTab('professions')">Professions</button>
   </div>
 
   <div id="output"></div>
@@ -612,13 +613,21 @@
       // Show/hide card tabs and filter rows based on current view and tab
       const tabsEl = document.getElementById('card-tabs');
       let filteredRows = rows;
+      const professions = new Set(['Alchemy', 'Blacksmithing', 'Enchanting', 'Engineering', 'Inscription', 'Jewelcrafting', 'Leatherworking', 'Cooking']);
 
       if (currentView === 'cards') {
         tabsEl.style.display = 'flex';
         // Filter rows based on current card tab
-        filteredRows = currentCardTab === 'untradeable'
-          ? rows.filter(row => row.response === 'Personal Loot - Non tradeable')
-          : rows.filter(row => row.response !== 'Personal Loot - Non tradeable');
+        if (currentCardTab === 'untradeable') {
+          filteredRows = rows.filter(row => row.response === 'Personal Loot - Non tradeable');
+        } else if (currentCardTab === 'professions') {
+          filteredRows = rows.filter(row => professions.has(row['Armor Type']));
+        } else {
+          // 'gear' tab: exclude both untradeable and professions
+          filteredRows = rows.filter(row =>
+            row.response !== 'Personal Loot - Non tradeable' && !professions.has(row['Armor Type'])
+          );
+        }
       } else {
         tabsEl.style.display = 'none';
       }
