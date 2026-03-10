@@ -424,7 +424,13 @@
           const obj = {};
           headers.forEach((h, i) => {
             const key = h.trim() || `Col${i + 1}`;
-            obj[key] = vals[i] ?? '';
+            let val = vals[i] ?? '';
+            // Extract URL from Excel HYPERLINK formula: =HYPERLINK("URL";"Display Text")
+            if (val.startsWith('=HYPERLINK(')) {
+              const urlMatch = val.match(/=HYPERLINK\("([^"]+)"/);
+              if (urlMatch) val = urlMatch[1];
+            }
+            obj[key] = val;
           });
           return obj;
         });
