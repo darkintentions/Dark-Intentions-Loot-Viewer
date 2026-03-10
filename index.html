@@ -533,6 +533,50 @@
       opacity: 0;
       margin-bottom: 0;
     }
+
+    /* ── SEASON FILTER ── */
+    .season-filter-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .season-filter-label {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    #season-filter {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s;
+      min-width: 250px;
+      flex: 1;
+    }
+
+    #season-filter:focus {
+      border-color: var(--accent);
+    }
+
+    #season-filter:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
   <script>const whTooltips = {colorLinks: true, iconizeLinks: true, renameLinks: true};</script>
   <script src="https://wow.zamimg.com/js/tooltips.js"></script>
@@ -585,6 +629,13 @@
         <option value="table">Table</option>
       </select>
     </div>
+  </div>
+
+  <div id="season-filter-container" class="season-filter-container" style="display:none;">
+    <label class="season-filter-label" for="season-filter">Select Season</label>
+    <select id="season-filter" onchange="setSeasonFilter(this.value)">
+      <option value="">All Seasons</option>
+    </select>
   </div>
 
   <div id="card-tabs" class="card-tabs-container" style="display:none; margin-bottom: 1rem;">
@@ -751,6 +802,93 @@
       }
     }
 
+    // ── SEASON FILTER ───────────────────────────────────────────────────────
+    async function loadSeasonsData() {
+      try {
+        const response = await fetch('wow_seasons.json');
+        if (!response.ok) throw new Error('Failed to load seasons data');
+        seasonsData = await response.json();
+        console.log('[Seasons] Data loaded:', seasonsData);
+        return seasonsData;
+      } catch (err) {
+        console.error('[Seasons] Error loading data:', err);
+        return null;
+      }
+    }
+
+    function getAvailableSeasons(rows) {
+      if (!seasonsData) return [];
+
+      const availableSeasons = [];
+
+      seasonsData.seasons.forEach(season => {
+        const startDate = new Date(season.startDate);
+        const endDate = new Date(season.endDate);
+
+        // Check if any rows fall within this season's date range
+        const hasCards = rows.some(row => {
+          if (!row.date) return false;
+          const rowDate = new Date(row.date);
+          return rowDate >= startDate && rowDate <= endDate;
+        });
+
+        if (hasCards) {
+          availableSeasons.push(season);
+        }
+      });
+
+      return availableSeasons;
+    }
+
+    function updateSeasonFilter(rows) {
+      const select = document.getElementById('season-filter');
+      const container = document.getElementById('season-filter-container');
+
+      const availableSeasons = getAvailableSeasons(rows);
+
+      if (availableSeasons.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+
+      container.style.display = 'flex';
+
+      // Save current selection
+      const currentValue = select.value;
+
+      // Rebuild options
+      select.innerHTML = '<option value="">All Seasons</option>';
+      availableSeasons.forEach(season => {
+        const option = document.createElement('option');
+        option.value = season.seasonCode;
+        option.textContent = season.name;
+        select.appendChild(option);
+      });
+
+      // Restore selection if still valid
+      select.value = currentValue;
+    }
+
+    function filterBySeasonDate(row) {
+      if (!currentSeasonFilter || !seasonsData) return true;
+
+      const season = seasonsData.seasons.find(s => s.seasonCode == currentSeasonFilter);
+      if (!season) return true;
+
+      if (!row.date) return false;
+
+      const startDate = new Date(season.startDate);
+      const endDate = new Date(season.endDate);
+      const rowDate = new Date(row.date);
+
+      return rowDate >= startDate && rowDate <= endDate;
+    }
+
+    function setSeasonFilter(seasonCode) {
+      currentSeasonFilter = seasonCode;
+      refreshDisplay();
+    }
+
     // ── IndexedDB ────────────────────────────────────────────────────────────
     const DB_NAME = 'TSVViewerDB';
     const DB_VERSION = 1;
@@ -840,6 +978,8 @@
     let currentCardTab = 'gear';
     let currentBossFilter = '';
     let currentResponseFilter = '';
+    let currentSeasonFilter = '';
+    let seasonsData = null;
 
     function showError(msg) {
       const el = document.getElementById('error');
@@ -1018,24 +1158,30 @@
       const headers = [...colSet];
       const rows = records.map(r => r.data);
 
+      // Update season filter with available seasons
+      updateSeasonFilter(rows);
+
+      // Apply season filter
+      let seasonFilteredRows = rows.filter(row => filterBySeasonDate(row));
+
       document.getElementById('stats').textContent =
-        `${rows.length} row${rows.length !== 1 ? 's' : ''}, ${headers.length} column${headers.length !== 1 ? 's' : ''}`;
+        `${seasonFilteredRows.length} row${seasonFilteredRows.length !== 1 ? 's' : ''}, ${headers.length} column${headers.length !== 1 ? 's' : ''}`;
       document.getElementById('view-toggle').style.display = 'flex';
 
       // Show/hide card tabs and filter rows based on current view and tab
       const tabsEl = document.getElementById('card-tabs');
-      let filteredRows = rows;
+      let filteredRows = seasonFilteredRows;
       const professions = new Set(['Alchemy', 'Blacksmithing', 'Enchanting', 'Engineering', 'Inscription', 'Jewelcrafting', 'Leatherworking', 'Cooking', 'Other']);
 
       if (currentView === 'cards') {
         tabsEl.style.display = 'flex';
 
         // Calculate unfiltered rows for each tab
-        let gearRowsUnfiltered = rows.filter(row =>
+        let gearRowsUnfiltered = seasonFilteredRows.filter(row =>
           row.response !== 'Personal Loot - Non tradeable' && !professions.has(row['Armor Type'])
         );
-        let untradeableRowsUnfiltered = rows.filter(row => row.response === 'Personal Loot - Non tradeable');
-        let professionsRowsUnfiltered = rows.filter(row => professions.has(row['Armor Type']));
+        let untradeableRowsUnfiltered = seasonFilteredRows.filter(row => row.response === 'Personal Loot - Non tradeable');
+        let professionsRowsUnfiltered = seasonFilteredRows.filter(row => professions.has(row['Armor Type']));
 
         // Populate boss and response filter dropdowns from current tab only (before applying filters)
         const tabRowsForFilters = currentCardTab === 'untradeable'
@@ -1141,7 +1287,7 @@
 
       const out = document.getElementById('output');
       out.innerHTML = currentView === 'table'
-        ? renderTable(headers, rows)
+        ? renderTable(headers, seasonFilteredRows)
         : renderCards(headers, filteredRows);
 
       // Re-initialise Wowhead tooltips on the new content
@@ -1431,6 +1577,8 @@
         initializeGoogleSignIn();
       }, 500);
     });
+
+    loadSeasonsData();
 
     openDB()
       .then(d => { db = d; return migrateItemField(); })
