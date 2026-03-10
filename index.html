@@ -577,6 +577,18 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+
+    /* Styling for option elements in dropdown */
+    #season-filter option {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    #season-filter option:disabled {
+      background: var(--surface);
+      color: var(--text-dim);
+      opacity: 0.6;
+    }
   </style>
   <script>const whTooltips = {colorLinks: true, iconizeLinks: true, renameLinks: true};</script>
   <script src="https://wow.zamimg.com/js/tooltips.js"></script>
@@ -857,6 +869,7 @@
       console.log('[Seasons] seasonsData:', seasonsData);
 
       const availableSeasons = getAvailableSeasons(rows);
+      const availableSeasonCodes = new Set(availableSeasons.map(s => s.seasonCode));
 
       console.log('[Seasons] Available seasons:', availableSeasons);
 
@@ -866,19 +879,33 @@
       // Save current selection
       const currentValue = select.value;
 
-      // Rebuild options
+      // Rebuild options - show ALL seasons, but disable unavailable ones
+      // Sort seasons by end date (latest first)
+      const sortedSeasons = [...seasonsData.seasons].sort((a, b) => {
+        return new Date(b.endDate) - new Date(a.endDate);
+      });
+
       select.innerHTML = '<option value="">All Seasons</option>';
-      availableSeasons.forEach(season => {
+      sortedSeasons.forEach(season => {
         const option = document.createElement('option');
         option.value = season.seasonCode;
-        option.textContent = season.name;
+
+        // Add visual indicator for unavailable seasons
+        if (!availableSeasonCodes.has(season.seasonCode)) {
+          option.textContent = season.name + ' (no data)';
+          option.disabled = true;
+          console.log(`[Seasons] Disabled ${season.name} (no matching cards)`);
+        } else {
+          option.textContent = season.name;
+        }
+
         select.appendChild(option);
       });
 
       // Restore selection if still valid
       select.value = currentValue;
 
-      console.log('[Seasons] Season filter updated. Available:', availableSeasons.length);
+      console.log('[Seasons] Season filter updated. Available:', availableSeasons.length, 'Total:', seasonsData.seasons.length);
     }
 
     function filterBySeasonDate(row) {
