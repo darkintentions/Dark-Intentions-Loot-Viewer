@@ -1590,13 +1590,14 @@
       }, 500);
     });
 
-    loadSeasonsData();
-
-    openDB()
-      .then(d => { db = d; return migrateItemField(); })
-      .then(migrateGearFields)
+    // Initialize both seasons data and database together
+    Promise.all([
+      loadSeasonsData(),
+      openDB().then(d => { db = d; return migrateItemField(); })
+    ])
+      .then(() => migrateGearFields())
       .then(refreshDisplay)
-      .catch(err => showError('Failed to open database: ' + err.message));
+      .catch(err => showError('Failed to initialize: ' + err.message));
   </script>
 
 </body>
