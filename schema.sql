@@ -25,8 +25,35 @@ CREATE TABLE IF NOT EXISTS roster (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Effort Points (EP) history
+CREATE TABLE IF NOT EXISTS ep (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  player TEXT NOT NULL,
+  ep REAL NOT NULL,
+  reason TEXT,
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Gear Points (GP) history
+CREATE TABLE IF NOT EXISTS gp (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  player TEXT NOT NULL,
+  gp REAL NOT NULL,
+  reason TEXT,
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Gear slot point values
+CREATE TABLE IF NOT EXISTS gear_slot_points (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gear_slot TEXT NOT NULL UNIQUE,
+  points REAL DEFAULT 0
+);
+
 -- Create index for faster queries
 CREATE INDEX IF NOT EXISTS idx_player ON loot(player);
 CREATE INDEX IF NOT EXISTS idx_date ON loot(date);
 CREATE INDEX IF NOT EXISTS idx_boss ON loot(boss);
 CREATE INDEX IF NOT EXISTS idx_roster_player ON roster(player);
+CREATE INDEX IF NOT EXISTS idx_ep_player ON ep(player);
+CREATE INDEX IF NOT EXISTS idx_gp_player ON gp(player);
