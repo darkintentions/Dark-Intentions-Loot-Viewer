@@ -127,6 +127,13 @@
       background: transparent;
     }
 
+    .sidebar.sidebar-collapsed .sidebar-header .sidebar-toggle {
+      width: 100%;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      justify-content: center;
+    }
+
     .sidebar-toggle:hover {
       background: var(--border);
       color: var(--text);
@@ -1198,7 +1205,7 @@
     <!-- Sidebar -->
     <div class="sidebar">
       <div class="sidebar-header">
-        <div class="sidebar-menu-header">Menu</div>
+        <div class="sidebar-menu-header">MENU</div>
         <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()"><span class="toggle-icon">◀</span></button>
       </div>
       <nav class="sidebar-nav">
