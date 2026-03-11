@@ -16,6 +16,10 @@ async function ensureTableExists(env) {
         date TEXT,
         armor_type TEXT,
         gear_slot TEXT,
+        class TEXT,
+        instance TEXT,
+        equiploc TEXT,
+        note TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(player, item, boss, response, date)
       )`
@@ -87,7 +91,7 @@ async function handleGet(env) {
     await ensureTableExists(env);
 
     const result = await env.DB.prepare(
-      `SELECT id, player, item, boss, response, date, armor_type, gear_slot, created_at
+      `SELECT id, player, item, boss, response, date, armor_type, gear_slot, class, instance, equiploc, note, created_at
        FROM loot
        ORDER BY created_at DESC`
     ).all();
@@ -134,8 +138,8 @@ async function handlePost(env, request) {
     for (const row of rows) {
       try {
         const result = await env.DB.prepare(
-          `INSERT INTO loot (player, item, boss, response, date, armor_type, gear_slot)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`
+          `INSERT INTO loot (player, item, boss, response, date, armor_type, gear_slot, class, instance, equiploc, note)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         ).bind(
           row.player || '',
           row.item || '',
@@ -143,7 +147,11 @@ async function handlePost(env, request) {
           row.response || null,
           row.date || null,
           row.armor_type || null,
-          row.gear_slot || null
+          row.gear_slot || null,
+          row.class || null,
+          row.instance || null,
+          row.equiploc || null,
+          row.note || null
         ).run();
 
         added++;

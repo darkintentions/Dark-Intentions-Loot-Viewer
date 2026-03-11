@@ -8,6 +8,10 @@ CREATE TABLE IF NOT EXISTS loot (
   date TEXT,
   armor_type TEXT,
   gear_slot TEXT,
+  class TEXT,
+  instance TEXT,
+  equiploc TEXT,
+  note TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(player, item, boss, response, date)
 );
