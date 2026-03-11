@@ -1246,7 +1246,7 @@
   <div id="loot-view" class="view-section"></div>
 
   <div id="roster-view" class="view-section" style="display: none;">
-    <div id="roster-season-filter" class="season-filter-container" style="display: none;">
+    <div id="roster-season-filter-container" class="season-filter-container" style="display: none;">
       <label class="season-filter-label" for="roster-season-filter">Select Season</label>
       <select id="roster-season-filter" onchange="setRosterSeasonFilter(this.value)">
         <option value="">All Seasons</option>
@@ -2062,7 +2062,7 @@
 
     function updateRosterSeasonFilter(rows) {
       const select = document.getElementById('roster-season-filter');
-      const container = document.getElementById('roster-season-filter');
+      const container = document.getElementById('roster-season-filter-container');
 
       if (!seasonsData) return;
 
