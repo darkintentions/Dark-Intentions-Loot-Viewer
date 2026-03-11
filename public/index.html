@@ -2321,16 +2321,15 @@
           'Off Hand', 'Ranged', '2-Hand'
         ];
 
-        const points = {};
-        gearSlots.forEach(slot => {
-          const input = document.getElementById(`gear-${slot}`);
-          points[slot] = parseFloat(input.value) || 0;
-        });
+        const gearSlotsArray = gearSlots.map(slot => ({
+          gearSlot: slot,
+          points: parseFloat(document.getElementById(`gear-${slot}`).value) || 0
+        }));
 
-        const response = await fetch('/api/gear_slot_points', {
+        const response = await fetch('/api/gear', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ points })
+          body: JSON.stringify({ gearSlots: gearSlotsArray })
         });
 
         if (!response.ok) {
