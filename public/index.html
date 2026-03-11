@@ -32,9 +32,8 @@
       color: var(--text);
       font-family: 'Segoe UI', system-ui, sans-serif;
       min-height: 100vh;
-      padding: 2rem 1rem;
-      max-width: 1100px;
-      margin: 0 auto;
+      margin: 0;
+      padding: 0;
     }
 
     h1 {
@@ -75,6 +74,108 @@
       background: var(--accent);
       color: #fff;
       border-color: var(--accent);
+    }
+
+    /* ── SIDEBAR ── */
+    .app-container {
+      display: flex;
+      gap: 0;
+      min-height: 100vh;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      width: 280px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      transition: width 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sidebar.sidebar-collapsed {
+      width: 60px;
+    }
+
+    .sidebar-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 1rem 0.5rem;
+      background: var(--surface2);
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--accent);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .sidebar-toggle:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 1rem 0.5rem;
+      flex: 1;
+    }
+
+    .sidebar-nav-btn {
+      padding: 0.75rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-dim);
+      transition: all 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar.sidebar-collapsed .sidebar-nav-btn {
+      padding: 0.75rem 0.4rem;
+      font-size: 0;
+    }
+
+    .sidebar-nav-btn:hover {
+      color: var(--text);
+      border-color: var(--accent);
+      background: var(--border);
+    }
+
+    .sidebar-nav-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 1rem;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      overflow-y: auto;
+    }
+
+    .header-container {
+      margin-bottom: 1rem;
     }
 
     /* ── DB BAR ── */
@@ -369,6 +470,7 @@
       align-items: flex-start;
       margin-bottom: 1.5rem;
       gap: 1rem;
+      width: 100%;
     }
 
     .btn-login {
@@ -1039,18 +1141,26 @@
 </head>
 <body>
 
-  <div class="header-container">
-    <div>
-      <h1>Dark Intentions Loot Viewer</h1>
-      <p class="subtitle">Paste TSV data to add it to the local database. Duplicate rows are automatically skipped.</p>
-      <div class="nav-buttons">
-        <button class="nav-btn active" id="loot-nav-btn" onclick="navigateTo('loot')">Loot</button>
-        <button class="nav-btn" id="roster-nav-btn" onclick="navigateTo('roster')">Roster</button>
-        <button class="nav-btn" id="admin-nav-btn" onclick="navigateTo('admin')">Admin</button>
-      </div>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">▶</button>
+      <nav class="sidebar-nav">
+        <button class="sidebar-nav-btn active" id="loot-nav-btn" onclick="navigateTo('loot')">Loot</button>
+        <button class="sidebar-nav-btn" id="roster-nav-btn" onclick="navigateTo('roster')">Roster</button>
+        <button class="sidebar-nav-btn" id="admin-nav-btn" onclick="navigateTo('admin')">Admin</button>
+      </nav>
     </div>
-    <button class="btn-login" id="login-btn" onclick="handleLoginClick()">Log In</button>
-  </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="header-container">
+        <div>
+          <h1>Dark Intentions Loot Viewer</h1>
+          <p class="subtitle">Paste TSV data to add it to the local database. Duplicate rows are automatically skipped.</p>
+        </div>
+        <button class="btn-login" id="login-btn" onclick="handleLoginClick()">Log In</button>
+      </div>
 
   <!-- Login Modal -->
   <div id="login-modal" class="login-modal">
@@ -1695,6 +1805,35 @@
         loadAdminView();
       }
     }
+
+    // ── Sidebar Toggle ──────────────────────────────────────────────────────
+    let sidebarExpanded = true;
+
+    function toggleSidebar() {
+      sidebarExpanded = !sidebarExpanded;
+      const sidebar = document.querySelector('.sidebar');
+      const toggle = document.getElementById('sidebar-toggle');
+
+      if (sidebarExpanded) {
+        sidebar.classList.remove('sidebar-collapsed');
+        toggle.textContent = '▶';
+      } else {
+        sidebar.classList.add('sidebar-collapsed');
+        toggle.textContent = '◀';
+      }
+
+      // Save to localStorage
+      localStorage.setItem('sidebarExpanded', sidebarExpanded);
+    }
+
+    // Restore sidebar state from localStorage on page load
+    (function() {
+      const saved = localStorage.getItem('sidebarExpanded');
+      if (saved === 'false') {
+        sidebarExpanded = true; // Set to true so toggle inverts it
+        toggleSidebar();
+      }
+    })();
 
     let currentRosterSeasonFilter = '';
 
@@ -2748,6 +2887,9 @@
       })
       .catch(err => showError('Failed to initialize: ' + err.message));
   </script>
+
+    </div>
+  </div>
 
 </body>
 </html>
