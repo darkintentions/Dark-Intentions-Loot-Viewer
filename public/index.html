@@ -123,6 +123,11 @@
       color: var(--text);
     }
 
+    .sidebar:not(.sidebar-collapsed) .sidebar-toggle {
+      justify-content: flex-end;
+      padding-right: 1rem;
+    }
+
     .sidebar-nav {
       display: flex;
       flex-direction: column;
@@ -1156,7 +1161,7 @@
   <div class="app-container">
     <!-- Sidebar -->
     <div class="sidebar">
-      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">✕</button>
       <nav class="sidebar-nav">
         <button class="sidebar-nav-btn active" id="loot-nav-btn" onclick="navigateTo('loot')"><img src="/loot-icon.jpg" class="nav-icon" alt="Loot"> Loot</button>
         <button class="sidebar-nav-btn" id="roster-nav-btn" onclick="navigateTo('roster')"><img src="/roster-icon.jpg" class="nav-icon" alt="Roster"> Roster</button>
@@ -1824,11 +1829,14 @@
     function toggleSidebar() {
       sidebarExpanded = !sidebarExpanded;
       const sidebar = document.querySelector('.sidebar');
+      const toggle = document.getElementById('sidebar-toggle');
 
       if (sidebarExpanded) {
         sidebar.classList.remove('sidebar-collapsed');
+        toggle.textContent = '✕';
       } else {
         sidebar.classList.add('sidebar-collapsed');
+        toggle.textContent = '☰';
       }
 
       // Save to localStorage
