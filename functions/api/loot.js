@@ -3,6 +3,34 @@
  * Handles GET (fetch all rows), POST (add rows), DELETE (clear all)
  */
 
+// Ensure the loot table exists, create if missing
+async function ensureTableExists(env) {
+  try {
+    await env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS loot (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        player TEXT NOT NULL,
+        item TEXT NOT NULL,
+        boss TEXT,
+        response TEXT,
+        date TEXT,
+        armor_type TEXT,
+        gear_slot TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(player, item, boss, response, date)
+      )`
+    ).run();
+
+    // Create indexes if they don't exist
+    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_player ON loot(player)`).run();
+    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_date ON loot(date)`).run();
+    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_boss ON loot(boss)`).run();
+  } catch (error) {
+    console.error('Error ensuring table exists:', error);
+    // Table might already exist, continue anyway
+  }
+}
+
 // Helper function for CORS headers
 function corsHeaders() {
   return {
@@ -55,6 +83,9 @@ export async function onRequest(context) {
  */
 async function handleGet(env) {
   try {
+    // Ensure table exists
+    await ensureTableExists(env);
+
     const result = await env.DB.prepare(
       `SELECT id, player, item, boss, response, date, armor_type, gear_slot, created_at
        FROM loot
@@ -84,6 +115,9 @@ async function handleGet(env) {
  */
 async function handlePost(env, request) {
   try {
+    // Ensure table exists
+    await ensureTableExists(env);
+
     const { rows } = await request.json();
 
     if (!Array.isArray(rows)) {
@@ -146,6 +180,9 @@ async function handlePost(env, request) {
  */
 async function handleDelete(env) {
   try {
+    // Ensure table exists
+    await ensureTableExists(env);
+
     // Get count before deletion
     const countResult = await env.DB.prepare('SELECT COUNT(*) as count FROM loot').first();
     const countBefore = countResult?.count || 0;
