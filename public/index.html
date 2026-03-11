@@ -125,27 +125,6 @@
       color: var(--text);
     }
 
-    .sidebar:not(.sidebar-collapsed) .sidebar-toggle {
-      justify-content: flex-start;
-      flex-direction: row;
-      padding: 1rem 0.5rem;
-      gap: 1rem;
-    }
-
-    .sidebar:not(.sidebar-collapsed) .sidebar-toggle .toggle-text {
-      flex: 1;
-      text-align: right;
-    }
-
-    .sidebar-toggle .toggle-text {
-      font-size: 0.8rem;
-      font-weight: 600;
-      display: none;
-    }
-
-    .sidebar:not(.sidebar-collapsed) .sidebar-toggle .toggle-text {
-      display: block;
-    }
 
     .sidebar-nav {
       display: flex;
@@ -1180,7 +1159,7 @@
   <div class="app-container">
     <!-- Sidebar -->
     <div class="sidebar">
-      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()"></button>
+      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()"><span class="toggle-icon">◀</span></button>
       <nav class="sidebar-nav">
         <button class="sidebar-nav-btn active" id="loot-nav-btn" onclick="navigateTo('loot')"><img src="/loot-icon.jpg" class="nav-icon" alt="Loot"> Loot</button>
         <button class="sidebar-nav-btn" id="roster-nav-btn" onclick="navigateTo('roster')"><img src="/roster-icon.jpg" class="nav-icon" alt="Roster"> Roster</button>
@@ -1848,11 +1827,14 @@
     function toggleSidebar() {
       sidebarExpanded = !sidebarExpanded;
       const sidebar = document.querySelector('.sidebar');
+      const toggleIcon = document.querySelector('.toggle-icon');
 
       if (sidebarExpanded) {
         sidebar.classList.remove('sidebar-collapsed');
+        toggleIcon.textContent = '◀';
       } else {
         sidebar.classList.add('sidebar-collapsed');
+        toggleIcon.textContent = '▶';
       }
 
       // Save to localStorage
