@@ -1379,7 +1379,7 @@
         </div>
         <div class="ep-form-group">
           <label class="ep-form-label">EP</label>
-          <input id="ep-value-input" class="ep-form-input" type="number" step="0.1" placeholder="0" />
+          <input id="ep-value-input" class="ep-form-input" type="number" step="1" placeholder="0" />
         </div>
         <div class="ep-form-group">
           <label class="ep-form-label">Reason</label>
@@ -1903,8 +1903,8 @@
           const pr = player.pr || 0;
           html += `<tr>
             <td>${player.player}</td>
-            <td><input type="number" step="0.1" value="${player.ep}" onchange="updateRosterPlayer('${player.player}', this.value, ${player.gp})"></td>
-            <td><input type="number" step="0.1" value="${player.gp}" onchange="updateRosterPlayer('${player.player}', ${player.ep}, this.value)"></td>
+            <td><input type="number" step="1" value="${player.ep}" onchange="updateRosterPlayer('${player.player}', this.value, ${player.gp})"></td>
+            <td><input type="number" step="1" value="${player.gp}" onchange="updateRosterPlayer('${player.player}', ${player.ep}, this.value)"></td>
             <td>${pr}</td>
           </tr>`;
         });
@@ -2492,7 +2492,7 @@
         grid.innerHTML = gearSlots.map(slot => `
           <div class="gear-slot-item">
             <label class="gear-slot-label" for="gear-${slot}">${slot}</label>
-            <input class="gear-slot-input" id="gear-${slot}" type="number" step="0.1" value="${pointsMap[slot] || 0}">
+            <input class="gear-slot-input" id="gear-${slot}" type="number" step="1" value="${pointsMap[slot] || 0}">
           </div>
         `).join('');
       } catch (err) {
