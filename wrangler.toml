@@ -1,4 +1,4 @@
-name = "loot"
+name = "di-loot"
 compatibility_date = "2025-09-27"
 pages_build_output_dir = "public"
 
