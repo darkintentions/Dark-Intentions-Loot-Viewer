@@ -13,5 +13,8 @@
       "database_name": "loot-epgp",
       "database_id": "468abc42-381f-4a0f-8708-e4d98e3a1e92"
     }
-  ]
+  ],
+  "assets": {
+    "directory": "./"
+  }
 }
