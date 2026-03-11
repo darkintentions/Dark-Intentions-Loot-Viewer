@@ -1052,6 +1052,51 @@
       flex: 1;
     }
 
+    /* Add Effort Points Form */
+    .ep-form-container {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .ep-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .ep-form-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .ep-form-input {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .ep-form-input:focus {
+      border-color: var(--accent);
+    }
+
+    .ep-form-input[type="text"] {
+      cursor: text;
+    }
+
     /* Gear Slot Points Assignment */
     .gear-slot-grid {
       display: grid;
@@ -1322,6 +1367,28 @@
   </div>
 
   <div id="epgp-view" class="view-section" style="display: none;">
+    <!-- Add Effort Points -->
+    <div class="admin-section">
+      <div class="admin-section-title">Add Effort Points</div>
+      <div class="ep-form-container">
+        <div class="ep-form-group">
+          <label class="ep-form-label">Player</label>
+          <select id="ep-player-select" class="ep-form-input">
+            <option value="">Select a player</option>
+          </select>
+        </div>
+        <div class="ep-form-group">
+          <label class="ep-form-label">EP</label>
+          <input id="ep-value-input" class="ep-form-input" type="number" step="0.1" placeholder="0" />
+        </div>
+        <div class="ep-form-group">
+          <label class="ep-form-label">Reason</label>
+          <input id="ep-reason-input" class="ep-form-input" type="text" placeholder="Optional note" />
+        </div>
+        <button class="btn-primary" onclick="addEffortPoints()" style="align-self: flex-end;">Add EP</button>
+      </div>
+    </div>
+
     <!-- Gear Slot Points Assignment -->
     <div class="admin-section">
       <div class="admin-section-title">Assign Gear Slot Points</div>
@@ -2303,11 +2370,87 @@
     // ── EPGP View ────────────────────────────────────────────────────────────
     async function loadEPGPView() {
       try {
+        // Load players for EP form
+        loadPlayersForEPForm();
         // Load gear slot points
         loadGearSlotPoints();
       } catch (err) {
         console.error('[EPGP] Error loading EPGP view:', err);
         showError('Error loading EPGP view: ' + err.message);
+      }
+    }
+
+    async function loadPlayersForEPForm() {
+      try {
+        const response = await fetch('/api/player', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch players');
+        }
+
+        const result = await response.json();
+        const playerSelect = document.getElementById('ep-player-select');
+
+        // Clear existing options except the placeholder
+        playerSelect.innerHTML = '<option value="">Select a player</option>';
+
+        // Add players to dropdown
+        if (result.data && Array.isArray(result.data)) {
+          result.data.forEach(player => {
+            const option = document.createElement('option');
+            option.value = player;
+            option.textContent = player;
+            playerSelect.appendChild(option);
+          });
+        }
+      } catch (err) {
+        console.error('[EPGP] Error loading players:', err);
+      }
+    }
+
+    async function addEffortPoints() {
+      try {
+        const player = document.getElementById('ep-player-select').value;
+        const ep = parseFloat(document.getElementById('ep-value-input').value);
+        const reason = document.getElementById('ep-reason-input').value;
+
+        if (!player) {
+          showError('Please select a player');
+          return;
+        }
+
+        if (isNaN(ep) || ep === '') {
+          showError('Please enter a valid EP value');
+          return;
+        }
+
+        const response = await fetch('/api/ep', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            player: player,
+            ep: ep,
+            reason: reason || null
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to add effort points');
+        }
+
+        showNotify(`Added ${ep} EP to ${player}`, 'success');
+
+        // Clear form
+        document.getElementById('ep-player-select').value = '';
+        document.getElementById('ep-value-input').value = '';
+        document.getElementById('ep-reason-input').value = '';
+      } catch (err) {
+        console.error('[EPGP] Error adding effort points:', err);
+        showError('Error adding effort points: ' + err.message);
       }
     }
 
