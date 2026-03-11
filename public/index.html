@@ -1551,12 +1551,18 @@
         return;
       }
 
-      // Build ordered column list: union of all keys, preserving first-seen order, excluding hidden
-      const colSet = new Set();
+      // Build ordered column list: start with expected columns, then add any extras
+      const expectedColumns = ['player', 'item', 'boss', 'response', 'date', 'armor_type', 'gear_slot'];
+      const colSet = new Set(expectedColumns);
+
+      // Add any extra columns found in the data (but not hidden ones)
       records.forEach(r => Object.keys(r.data).forEach(k => {
         if (!HIDDEN_COLS.has(k)) colSet.add(k);
       }));
-      const headers = [...colSet];
+
+      // Preserve order: expected columns first, then extras
+      const headers = [...expectedColumns.filter(h => colSet.has(h)),
+                       ...[...colSet].filter(h => !expectedColumns.includes(h))];
       const rows = records.map(r => r.data);
 
       // Update season filter with available seasons
