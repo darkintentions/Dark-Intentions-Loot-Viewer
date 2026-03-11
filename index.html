@@ -1758,11 +1758,13 @@
 
     function cellContent(val) {
       if (!val) return '<span style="opacity:0.4">—</span>';
+      // Convert to string (val might be a number or other type)
+      const strVal = String(val);
       // If it's a Wowhead URL, convert to a link for tooltip processing
-      if (val.includes('wowhead.com')) {
-        return `<a href="${esc(val)}" data-wh-icon="true"></a>`;
+      if (strVal.includes('wowhead.com')) {
+        return `<a href="${esc(strVal)}" data-wh-icon="true"></a>`;
       }
-      return esc(val);
+      return esc(strVal);
     }
 
     function renderTable(headers, rows) {
@@ -1963,7 +1965,10 @@
 
     // Initialize seasons data and refresh display
     loadSeasonsData()
-      .then(refreshDisplay)
+      .then(() => {
+        navigateTo('loot'); // Initialize to show loot view
+        refreshDisplay();
+      })
       .catch(err => showError('Failed to initialize: ' + err.message));
   </script>
 
