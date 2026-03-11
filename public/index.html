@@ -107,7 +107,6 @@
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      width: 100%;
       padding: 1rem 0.5rem;
       background: var(--surface2);
       border: none;
@@ -120,25 +119,45 @@
       gap: 0.3rem;
     }
 
+    .sidebar-header .sidebar-toggle {
+      width: auto;
+      padding: 1rem 0.5rem;
+      border: none;
+      border-bottom: none;
+      background: transparent;
+    }
+
     .sidebar-toggle:hover {
       background: var(--border);
       color: var(--text);
     }
 
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+
     .sidebar:not(.sidebar-collapsed) .sidebar-toggle {
       flex-direction: row;
-      justify-content: flex-end;
-      padding-right: 1rem;
+      justify-content: center;
+      padding-left: 0;
+      padding-right: 0.5rem;
+      border: none;
+      border-bottom: none;
     }
 
     .sidebar-menu-header {
       display: none;
-      text-align: center;
       font-size: 1rem;
       font-weight: 700;
-      padding: 0.5rem 1rem;
+      padding: 1rem 0.5rem;
       color: var(--text);
-      border-bottom: 1px solid var(--border);
+      flex: 1;
+      text-align: center;
     }
 
     .sidebar:not(.sidebar-collapsed) .sidebar-menu-header {
@@ -1178,8 +1197,10 @@
   <div class="app-container">
     <!-- Sidebar -->
     <div class="sidebar">
-      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()"><span class="toggle-icon">◀</span></button>
-      <div class="sidebar-menu-header">Menu</div>
+      <div class="sidebar-header">
+        <div class="sidebar-menu-header">Menu</div>
+        <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()"><span class="toggle-icon">◀</span></button>
+      </div>
       <nav class="sidebar-nav">
         <button class="sidebar-nav-btn active" id="loot-nav-btn" onclick="navigateTo('loot')"><img src="/loot-icon.jpg" class="nav-icon" alt="Loot"> Loot</button>
         <button class="sidebar-nav-btn" id="roster-nav-btn" onclick="navigateTo('roster')"><img src="/roster-icon.jpg" class="nav-icon" alt="Roster"> Roster</button>
