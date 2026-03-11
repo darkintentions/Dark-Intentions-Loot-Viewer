@@ -1240,7 +1240,7 @@
     }
 
     // ── Hidden columns (stored in DB but not displayed) ──────────────────────
-    const HIDDEN_COLS = new Set(['id', 'itemString', 'owner', 'votes', 'itemid', 'itemID', 'responseID', 'roletype', 'isAwardReason', 'rollType', 'created_at']);
+    const HIDDEN_COLS = new Set(['id', 'itemString', 'owner', 'votes', 'itemid', 'itemID', 'responseID', 'roletype', 'isAwardReason', 'rollType', 'created_at', 'equiploc']);
 
     // ── UI Helpers ───────────────────────────────────────────────────────────
     let currentView = 'cards';
@@ -1552,7 +1552,7 @@
       }
 
       // Build ordered column list: start with expected columns, then add any extras
-      const expectedColumns = ['player', 'item', 'boss', 'response', 'date', 'armor_type', 'gear_slot', 'class', 'instance', 'equiploc', 'note'];
+      const expectedColumns = ['player', 'date', 'item', 'instance', 'boss', 'response', 'class', 'armor_type', 'gear_slot', 'note'];
       const colSet = new Set(expectedColumns);
 
       // Add any extra columns found in the data (but not hidden ones)

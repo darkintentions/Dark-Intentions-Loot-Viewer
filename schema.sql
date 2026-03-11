@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS loot (
   gear_slot TEXT,
   class TEXT,
   instance TEXT,
-  equiploc TEXT,
   note TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(player, item, boss, response, date)
