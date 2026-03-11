@@ -1,0 +1,1976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dark Intentions Loot Viewer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3250;
+      --accent: #5b8dee;
+      --accent-dim: #3d60b0;
+      --danger: #e05b5b;
+      --danger-dim: #b03d3d;
+      --success-bg: #1a2d22;
+      --success-border: #2e6b4a;
+      --success-text: #4caf7d;
+      --warn-bg: #2d2a1a;
+      --warn-border: #6b5a2e;
+      --warn-text: #f0c060;
+      --text: #e0e4f0;
+      --text-dim: #7a80a0;
+      --radius: 10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .nav-btn {
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-dim);
+      transition: all 0.15s;
+    }
+
+    .nav-btn:hover {
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    .nav-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* ── DB BAR ── */
+    .db-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.6rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+      gap: 0.75rem;
+    }
+
+    .db-count { color: var(--text-dim); }
+
+    /* ── INPUT ── */
+    .input-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .input-section label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.6rem;
+    }
+
+    textarea {
+      width: 100%;
+      height: 140px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.82rem;
+      padding: 0.75rem;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    textarea:focus { border-color: var(--accent); }
+
+    /* ── NOTIFICATIONS ── */
+    .notify {
+      border-radius: 6px;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+      display: none;
+    }
+
+    .notify.success {
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+      color: var(--success-text);
+    }
+
+    .notify.warning {
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+      color: var(--warn-text);
+    }
+
+    .error-msg {
+      background: #2d1a1a;
+      border: 1px solid #6b2e2e;
+      color: #f08080;
+      border-radius: 6px;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+      display: none;
+    }
+
+    /* ── CONTROLS ── */
+    .controls {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+
+    button {
+      padding: 0.55rem 1.2rem;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-dim); }
+
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--border); }
+
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: var(--danger-dim); }
+
+    .stats { font-size: 0.82rem; color: var(--text-dim); }
+
+    .view-toggle { margin-left: auto; }
+
+    .view-select {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .view-select:focus { border-color: var(--accent); }
+
+    /* ── TABLE ── */
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    thead { background: var(--surface2); }
+
+    th {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 0.7rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+
+    /* ── CARDS ── */
+    .card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.6rem 1.25rem;
+      transition: border-color 0.15s;
+    }
+
+    .card:hover { border-color: var(--accent); }
+
+    .card-field { display: flex; flex-direction: column; gap: 0.15rem; }
+
+    .field-key {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .field-value {
+      font-size: 0.88rem;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+    }
+
+    /* ── CARD TABS ── */
+    .card-tabs-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0;
+      gap: 1rem;
+    }
+
+    .card-tabs {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .tab-btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-bottom: 3px solid transparent;
+      background: transparent;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: -2px;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+      border-bottom-color: var(--accent-dim);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .boss-filter {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .boss-filter:focus {
+      border-color: var(--accent);
+    }
+
+    .boss-filter:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .filter-dropdowns {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    #output { min-height: 80px; }
+
+    /* ── HEADER CONTAINER ── */
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+    }
+
+    .btn-login {
+      padding: 0.55rem 1.2rem;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s;
+      font-family: inherit;
+      background: var(--accent);
+      color: #fff;
+      white-space: nowrap;
+      align-self: center;
+    }
+
+    .btn-login:hover { background: var(--accent-dim); }
+
+    /* ── LOGIN MODAL ── */
+    .login-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-modal.active {
+      display: flex;
+    }
+
+    .login-modal-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      max-width: 400px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .login-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    .login-modal-header h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s;
+    }
+
+    .close-btn:hover {
+      color: var(--text);
+    }
+
+    .login-modal-body {
+      text-align: center;
+    }
+
+    .login-modal-body p {
+      color: var(--text-dim);
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    #google-signin-button {
+      display: flex;
+      justify-content: center;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+    }
+
+    .user-info-name {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .logout-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+    }
+
+    .logout-btn:hover {
+      background: var(--surface2);
+    }
+
+    /* ── DATE GROUP HEADERS ── */
+    .date-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .date-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+      margin-bottom: 0.75rem;
+    }
+
+    .date-header:hover {
+      background: var(--border);
+    }
+
+    .date-header-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      transition: transform 0.2s;
+      color: var(--text-dim);
+      font-size: 1rem;
+    }
+
+    .date-header.collapsed .date-header-toggle {
+      transform: rotate(-90deg);
+    }
+
+    .date-header-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .date-header-count {
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      background: var(--bg);
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+    }
+
+    .date-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+      max-height: 10000px;
+      opacity: 1;
+      overflow: hidden;
+    }
+
+    .date-cards.hidden {
+      max-height: 0;
+      opacity: 0;
+      margin-bottom: 0;
+    }
+
+    /* ── SEASON FILTER ── */
+    .season-filter-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .season-filter-label {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    #season-filter {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s;
+      min-width: 250px;
+      flex: 1;
+    }
+
+    #season-filter:focus {
+      border-color: var(--accent);
+    }
+
+    #season-filter:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Styling for option elements in dropdown */
+    #season-filter option {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    #season-filter option:disabled {
+      background: var(--surface);
+      color: var(--text-dim);
+      opacity: 0.6;
+    }
+
+    /* ── VIEW SECTIONS ── */
+    .view-section {
+      display: none;
+    }
+
+    .view-section.active {
+      display: block;
+    }
+
+    /* ── ROSTER ── */
+    .roster-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .roster-header {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 1.5rem;
+    }
+
+    .roster-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .roster-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem;
+      transition: border-color 0.15s;
+    }
+
+    .roster-item:hover {
+      border-color: var(--accent);
+    }
+
+    .player-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      flex: 1;
+    }
+
+    .player-stats {
+      display: flex;
+      gap: 2rem;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      align-items: center;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+    }
+
+    .stat-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      text-align: center;
+    }
+
+    .empty-roster {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-dim);
+    }
+
+    .player-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    .player-header:hover {
+      background: var(--border);
+      border-radius: 4px;
+      padding: 0.25rem;
+      margin: -0.25rem;
+    }
+
+    .expand-icon {
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      transition: transform 0.2s;
+      margin-right: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .player-items {
+      margin-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      padding-top: 0.75rem;
+      transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+      max-height: 1000px;
+      opacity: 1;
+      overflow: hidden;
+    }
+
+    .player-items.hidden {
+      max-height: 0;
+      opacity: 0;
+      padding-top: 0;
+      margin-top: 0;
+      border-top: none;
+    }
+
+    .items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .item-row {
+      display: grid;
+      grid-template-columns: 1fr 0.8fr 1fr 0.8fr;
+      gap: 1rem;
+      padding: 0.5rem;
+      background: var(--bg);
+      border-radius: 4px;
+      font-size: 0.8rem;
+      color: #ffffff;
+    }
+
+    .item-cell {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+
+    .item-name {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .item-name a {
+      color: #ffffff;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .item-name a:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .item-boss {
+      color: var(--text-dim);
+    }
+
+    .item-response {
+      color: var(--text-dim);
+    }
+
+    .item-date {
+      color: var(--text-dim);
+    }
+  </style>
+  <script>const whTooltips = {colorLinks: true, iconizeLinks: true, renameLinks: true};</script>
+  <script src="https://wow.zamimg.com/js/tooltips.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+  <div class="header-container">
+    <div>
+      <h1>Dark Intentions Loot Viewer</h1>
+      <p class="subtitle">Paste TSV data to add it to the local database. Duplicate rows are automatically skipped.</p>
+      <div class="nav-buttons">
+        <button class="nav-btn active" id="loot-nav-btn" onclick="navigateTo('loot')">Loot</button>
+        <button class="nav-btn" id="roster-nav-btn" onclick="navigateTo('roster')">Roster</button>
+      </div>
+    </div>
+    <button class="btn-login" id="login-btn" onclick="handleLoginClick()">Log In</button>
+  </div>
+
+  <!-- Login Modal -->
+  <div id="login-modal" class="login-modal">
+    <div class="login-modal-content">
+      <div class="login-modal-header">
+        <h2>Sign In</h2>
+        <button class="close-btn" onclick="closeLoginModal()">&times;</button>
+      </div>
+      <div class="login-modal-body">
+        <p>Sign in with your Google account to continue</p>
+        <div id="google-signin-button"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="db-bar">
+    <span class="db-count" id="db-count">Loading…</span>
+    <button class="btn-danger" onclick="confirmClearDB()">Clear Database</button>
+  </div>
+
+  <div id="loot-view" class="view-section">
+    <div class="input-section">
+      <label for="tsv-input">Paste TSV data</label>
+      <textarea id="tsv-input" placeholder="Column A&#9;Column B&#9;Column C&#10;Value 1&#9;Value 2&#9;Value 3&#10;Value 4&#9;Value 5&#9;Value 6"></textarea>
+    </div>
+  </div>
+
+  <div id="roster-view" class="view-section" style="display: none;">
+    <div class="roster-container" id="roster-container"></div>
+  </div>
+
+  <div id="notify" class="notify"></div>
+  <div id="error" class="error-msg"></div>
+
+  <div class="controls">
+    <button class="btn-primary" onclick="processInput()">Add to Database</button>
+    <button class="btn-ghost" onclick="clearInput()">Clear Input</button>
+    <span class="stats" id="stats"></span>
+    <div class="view-toggle" id="view-toggle" style="display:none;">
+      <select class="view-select" id="view-select" onchange="setView(this.value)">
+        <option value="cards">Cards</option>
+        <option value="table">Table</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="season-filter-container" class="season-filter-container">
+    <label class="season-filter-label" for="season-filter">Select Season</label>
+    <select id="season-filter" onchange="setSeasonFilter(this.value)">
+      <option value="">All Seasons</option>
+    </select>
+  </div>
+
+  <div id="card-tabs" class="card-tabs-container" style="display:none; margin-bottom: 1rem;">
+    <div class="card-tabs">
+      <button class="tab-btn active" data-tab="gear" onclick="setCardTab('gear')">Gear</button>
+      <button class="tab-btn" data-tab="untradeable" onclick="setCardTab('untradeable')">Untradeable PL</button>
+      <button class="tab-btn" data-tab="professions" onclick="setCardTab('professions')">Professions</button>
+    </div>
+    <div class="filter-dropdowns">
+      <select id="response-filter" class="boss-filter" onchange="setResponseFilter(this.value)">
+        <option value="">All Responses</option>
+      </select>
+      <select id="boss-filter" class="boss-filter" onchange="setBossFilter(this.value)">
+        <option value="">All Bosses</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="output"></div>
+
+  <script>
+    // ── GOOGLE AUTHENTICATION ─────────────────────────────────────────────────
+    const GOOGLE_CLIENT_ID = '360051357505-juaiqiruab2l5v3g7qfrj4b9ptmiutpv.apps.googleusercontent.com'; // Replace with your actual Client ID
+    let currentUser = null;
+
+    function handleLoginClick() {
+      const modal = document.getElementById('login-modal');
+      modal.classList.add('active');
+    }
+
+    function closeLoginModal() {
+      const modal = document.getElementById('login-modal');
+      modal.classList.remove('active');
+    }
+
+    // Close modal when clicking outside of it
+    document.addEventListener('click', (e) => {
+      const modal = document.getElementById('login-modal');
+      if (e.target === modal) {
+        closeLoginModal();
+      }
+    });
+
+    function initializeGoogleSignIn() {
+      if (typeof google === 'undefined') {
+        console.warn('[Auth] Google API not loaded yet');
+        return;
+      }
+
+      try {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleGoogleSignInResponse,
+          auto_select: false
+        });
+
+        google.accounts.id.renderButton(
+          document.getElementById('google-signin-button'),
+          {
+            type: 'standard',
+            size: 'large',
+            theme: 'filled_black',
+            text: 'signin_with'
+          }
+        );
+
+        console.log('[Auth] Google Sign-In initialized');
+      } catch (err) {
+        console.error('[Auth] Failed to initialize Google Sign-In:', err);
+      }
+    }
+
+    function handleGoogleSignInResponse(response) {
+      if (response.credential) {
+        // Decode the JWT token (basic decoding, not verification)
+        const token = response.credential;
+        try {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split('')
+              .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join('')
+          );
+          const userInfo = JSON.parse(jsonPayload);
+
+          currentUser = {
+            id: userInfo.sub,
+            email: userInfo.email,
+            name: userInfo.name,
+            picture: userInfo.picture,
+            token: token
+          };
+
+          // Store user info in localStorage
+          localStorage.setItem('loot_viewer_user', JSON.stringify(currentUser));
+
+          console.log('[Auth] User signed in:', userInfo.email);
+
+          closeLoginModal();
+          updateLoginUI();
+        } catch (err) {
+          console.error('[Auth] Error decoding token:', err);
+          showError('Error processing sign-in. Please try again.');
+        }
+      }
+    }
+
+    function updateLoginUI() {
+      const loginBtn = document.getElementById('login-btn');
+
+      if (currentUser) {
+        // Show user info instead of login button
+        loginBtn.innerHTML = `
+          <div class="user-info">
+            <span class="user-info-name">${esc(currentUser.name)}</span>
+            <button class="logout-btn" onclick="handleLogout(event)">Logout</button>
+          </div>
+        `;
+        loginBtn.style.padding = '0.5rem 1rem';
+        loginBtn.style.display = 'flex';
+        loginBtn.style.alignItems = 'center';
+        loginBtn.style.gap = '0.5rem';
+        loginBtn.style.cursor = 'default';
+        loginBtn.onclick = null; // Remove click handler
+      } else {
+        loginBtn.innerHTML = 'Log In';
+        loginBtn.style.padding = '0.55rem 1.2rem';
+        loginBtn.style.display = 'block';
+        loginBtn.onclick = () => handleLoginClick();
+      }
+    }
+
+    function handleLogout(event) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (typeof google !== 'undefined') {
+        google.accounts.id.disableAutoSelect();
+      }
+
+      currentUser = null;
+      localStorage.removeItem('loot_viewer_user');
+
+      updateLoginUI();
+      closeLoginModal();
+      showNotify('Signed out successfully', 'success');
+
+      console.log('[Auth] User signed out');
+    }
+
+    function restoreUserSession() {
+      const saved = localStorage.getItem('loot_viewer_user');
+      if (saved) {
+        try {
+          currentUser = JSON.parse(saved);
+          console.log('[Auth] Session restored for:', currentUser.email);
+          updateLoginUI();
+        } catch (err) {
+          console.error('[Auth] Error restoring session:', err);
+          localStorage.removeItem('loot_viewer_user');
+        }
+      }
+    }
+
+    // ── SEASON FILTER ───────────────────────────────────────────────────────
+    async function loadSeasonsData() {
+      try {
+        const response = await fetch('wow_seasons.json');
+        if (!response.ok) throw new Error('Failed to load seasons data');
+        seasonsData = await response.json();
+        console.log('[Seasons] Data loaded:', seasonsData);
+        return seasonsData;
+      } catch (err) {
+        console.error('[Seasons] Error loading data:', err);
+        return null;
+      }
+    }
+
+    function getAvailableSeasons(rows) {
+      if (!seasonsData) {
+        console.log('[Seasons] seasonsData not loaded yet');
+        return [];
+      }
+
+      const availableSeasons = [];
+
+      seasonsData.seasons.forEach(season => {
+        const startDate = new Date(season.startDate);
+        const endDate = new Date(season.endDate);
+
+        console.log(`[Seasons] Checking ${season.name}: ${season.startDate} to ${season.endDate}`);
+
+        // Check if any rows fall within this season's date range
+        const hasCards = rows.some(row => {
+          if (!row.date) return false;
+          const rowDate = new Date(row.date);
+          const inRange = rowDate >= startDate && rowDate <= endDate;
+          if (inRange) {
+            console.log(`[Seasons] Found card in ${season.name}: ${row.date}`);
+          }
+          return inRange;
+        });
+
+        if (hasCards) {
+          availableSeasons.push(season);
+        }
+      });
+
+      return availableSeasons;
+    }
+
+    function updateSeasonFilter(rows) {
+      const select = document.getElementById('season-filter');
+      const container = document.getElementById('season-filter-container');
+
+      console.log('[Seasons] updateSeasonFilter called with', rows.length, 'rows');
+      console.log('[Seasons] seasonsData:', seasonsData);
+
+      const availableSeasons = getAvailableSeasons(rows);
+      const availableSeasonCodes = new Set(availableSeasons.map(s => s.seasonCode));
+
+      console.log('[Seasons] Available seasons:', availableSeasons);
+
+      // Always show the container
+      container.style.display = 'flex';
+
+      // Save current selection
+      const currentValue = select.value;
+
+      // Rebuild options - show ALL seasons, but disable unavailable ones
+      // Sort seasons by end date (latest first)
+      const sortedSeasons = [...seasonsData.seasons].sort((a, b) => {
+        return new Date(b.endDate) - new Date(a.endDate);
+      });
+
+      select.innerHTML = '<option value="">All Seasons</option>';
+      sortedSeasons.forEach(season => {
+        const option = document.createElement('option');
+        option.value = season.seasonCode;
+
+        // Add visual indicator for unavailable seasons
+        if (!availableSeasonCodes.has(season.seasonCode)) {
+          option.textContent = season.name + ' (no data)';
+          option.disabled = true;
+          console.log(`[Seasons] Disabled ${season.name} (no matching cards)`);
+        } else {
+          option.textContent = season.name;
+        }
+
+        select.appendChild(option);
+      });
+
+      // Restore selection if still valid
+      select.value = currentValue;
+
+      console.log('[Seasons] Season filter updated. Available:', availableSeasons.length, 'Total:', seasonsData.seasons.length);
+    }
+
+    function filterBySeasonDate(row) {
+      if (!currentSeasonFilter || !seasonsData) return true;
+
+      const season = seasonsData.seasons.find(s => s.seasonCode == currentSeasonFilter);
+      if (!season) return true;
+
+      if (!row.date) return false;
+
+      const startDate = new Date(season.startDate);
+      const endDate = new Date(season.endDate);
+      const rowDate = new Date(row.date);
+
+      return rowDate >= startDate && rowDate <= endDate;
+    }
+
+    function setSeasonFilter(seasonCode) {
+      currentSeasonFilter = seasonCode;
+      refreshDisplay();
+    }
+
+    // ── Cloudflare D1 Database API ──────────────────────────────────────────
+    const API_BASE = '/functions/api/loot';
+
+    async function addRowsToDB(dataObjects) {
+      try {
+        const response = await fetch(API_BASE, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rows: dataObjects })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to add rows');
+        }
+
+        const result = await response.json();
+        return {
+          added: result.added,
+          skipped: result.skipped
+        };
+      } catch (err) {
+        console.error('[addRowsToDB] API error:', err);
+        throw err;
+      }
+    }
+
+    async function getAllRows() {
+      try {
+        const response = await fetch(API_BASE, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to fetch rows');
+        }
+
+        const result = await response.json();
+        // Transform API response to match old IndexedDB format
+        return result.data.map(row => ({
+          key: JSON.stringify({
+            player: row.player,
+            date: row.date,
+            itemID: row.item,
+            response: row.response
+          }),
+          data: row
+        }));
+      } catch (err) {
+        console.error('[getAllRows] API error:', err);
+        throw err;
+      }
+    }
+
+    async function clearAllRows() {
+      try {
+        const response = await fetch(API_BASE, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to clear rows');
+        }
+
+        return await response.json();
+      } catch (err) {
+        console.error('[clearAllRows] API error:', err);
+        throw err;
+      }
+    }
+
+    // ── Hidden columns (stored in DB but not displayed) ──────────────────────
+    const HIDDEN_COLS = new Set(['itemString', 'owner', 'votes', 'itemid', 'itemID', 'responseID', 'roletype', 'isAwardReason', 'rollType']);
+
+    // ── UI Helpers ───────────────────────────────────────────────────────────
+    let currentView = 'cards';
+    let currentCardTab = 'gear';
+    let currentBossFilter = '';
+    let currentResponseFilter = '';
+    let currentSeasonFilter = '';
+    let seasonsData = null;
+    let currentPage = 'loot';
+
+    function showError(msg) {
+      const el = document.getElementById('error');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function hideError() {
+      document.getElementById('error').style.display = 'none';
+    }
+
+    function showNotify(msg, type = 'success') {
+      const el = document.getElementById('notify');
+      el.textContent = msg;
+      el.className = 'notify ' + type;
+      el.style.display = 'block';
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+
+    function updateDBCount(n) {
+      document.getElementById('db-count').textContent =
+        `${n} row${n !== 1 ? 's' : ''} in database`;
+    }
+
+    // ── Navigation ──────────────────────────────────────────────────────────
+    function navigateTo(page) {
+      currentPage = page;
+
+      // Update button active states
+      document.getElementById('loot-nav-btn').classList.toggle('active', page === 'loot');
+      document.getElementById('roster-nav-btn').classList.toggle('active', page === 'roster');
+
+      // Toggle view sections
+      document.getElementById('loot-view').style.display = page === 'loot' ? 'block' : 'none';
+      document.getElementById('roster-view').style.display = page === 'roster' ? 'block' : 'none';
+
+      // Hide controls, tabs, and output if on roster view
+      document.getElementById('notify').style.display = 'none';
+      document.getElementById('error').style.display = 'none';
+      document.querySelector('.controls').style.display = page === 'loot' ? 'flex' : 'none';
+      document.getElementById('season-filter-container').style.display = page === 'loot' ? 'flex' : 'none';
+      document.getElementById('card-tabs').style.display = page === 'loot' ? 'flex' : 'none';
+      document.getElementById('output').style.display = page === 'loot' ? 'block' : 'none';
+
+      // Load roster if switching to roster view
+      if (page === 'roster') {
+        loadRoster();
+      }
+    }
+
+    async function loadRoster() {
+      try {
+        const records = await getAllRows();
+        const players = {};
+
+        // Group data by player
+        records.forEach(record => {
+          const player = record.data.player || 'Unknown';
+          if (!players[player]) {
+            players[player] = {
+              name: player,
+              items: [],
+              bosses: new Set(),
+              responses: new Set()
+            };
+          }
+          players[player].items.push(record.data);
+          if (record.data.boss) players[player].bosses.add(record.data.boss);
+          if (record.data.response) players[player].responses.add(record.data.response);
+        });
+
+        // Sort players alphabetically
+        const sortedPlayers = Object.values(players).sort((a, b) =>
+          a.name.localeCompare(b.name)
+        );
+
+        // Render roster
+        const container = document.getElementById('roster-container');
+        if (sortedPlayers.length === 0) {
+          container.innerHTML = '<div class="empty-roster">No players in database yet. Add some loot data to see them here!</div>';
+          return;
+        }
+
+        const rosterHTML = `
+          <div class="roster-header">Guild Roster</div>
+          <div class="roster-list">
+            ${sortedPlayers.map((player, idx) => `
+              <div class="roster-item">
+                <div class="player-header" onclick="togglePlayerItems(${idx})">
+                  <div class="expand-icon">▼</div>
+                  <div class="player-info">
+                    <div class="player-name">${esc(player.name)}</div>
+                    <div class="player-stats">
+                      <div class="stat-item">
+                        <div class="stat-label">Total Items</div>
+                        <div class="stat-value">${player.items.length}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="player-items hidden" id="player-items-${idx}">
+                  <div class="items-list">
+                    ${player.items.map(item => {
+                      const itemName = item.item || 'Unknown';
+                      // Match the full URL with all parameters (item ID and bonus data)
+                      const urlMatch = itemName.match(/https:\/\/www\.wowhead\.com\/item=(\d+)[^"\s]*/);
+                      const itemId = urlMatch ? urlMatch[1] : null;
+                      // Remove the entire URL (up to and including any query parameters) to get just the item name
+                      const itemDisplayName = itemName.replace(/https:\/\/www\.wowhead\.com\/item=\d+[^\s]*\s*/, '').trim();
+
+                      return `
+                        <div class="item-row">
+                          <div class="item-cell item-name">
+                            ${itemId ? `<a href="https://www.wowhead.com/item=${itemId}" data-wowhead="item=${itemId}">${esc(itemDisplayName)}</a>` : esc(itemDisplayName)}
+                          </div>
+                          <div class="item-cell item-boss">${esc(item.boss || '—')}</div>
+                          <div class="item-cell item-response">${esc(item.response || '—')}</div>
+                          <div class="item-cell item-date">${esc(item.date || '—')}</div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        container.innerHTML = rosterHTML;
+
+        // Reinitialize Wowhead tooltips on dynamically added content
+        if (window.$WowheadPower) {
+          window.$WowheadPower.refreshLinks();
+        }
+      } catch (err) {
+        console.error('[Roster] Error loading roster:', err);
+        document.getElementById('roster-container').innerHTML =
+          '<div class="empty-roster">Error loading roster. Please try again.</div>';
+      }
+    }
+
+    function togglePlayerItems(idx) {
+      const itemsDiv = document.getElementById(`player-items-${idx}`);
+      const header = itemsDiv.previousElementSibling;
+      const expandIcon = header.querySelector('.expand-icon');
+
+      itemsDiv.classList.toggle('hidden');
+
+      // Rotate the expand icon
+      if (itemsDiv.classList.contains('hidden')) {
+        expandIcon.style.transform = 'rotate(0deg)';
+      } else {
+        expandIcon.style.transform = 'rotate(-90deg)';
+      }
+    }
+
+    // ── Process Input ────────────────────────────────────────────────────────
+    async function processInput() {
+      hideError();
+      const raw = document.getElementById('tsv-input').value.trim();
+
+      if (!raw) {
+        showError('Nothing to process — paste some TSV data first.');
+        return;
+      }
+
+      const lines = raw.split('\n').map(l => l.trimEnd()).filter(l => l.length > 0);
+
+      if (lines.length < 2) {
+        showError('Need at least a header row and one data row.');
+        return;
+      }
+
+      let headers = lines[0].split('\t').map(h => {
+        const trimmed = h.trim();
+        const lower = trimmed.toLowerCase();
+        // Rename columns
+        if (lower === 'subtype') return 'Armor Type';
+        if (lower === 'equiploc') return 'Gear Slot';
+        return trimmed;
+      });
+
+      // Map of SUBTYPE values to Armor Type display names
+      const armorTypeMap = {
+        'Cloth': 'Cloth',
+        'Leather': 'Leather',
+        'Mail': 'Mail',
+        'Plate': 'Plate',
+        'Miscellaneous': 'Accessory',
+        'Armor Token': 'Tier Token',
+        'Bows': 'Bow',
+        'Crossbows': 'Crossbow',
+        'Guns': 'Gun',
+        'One-Handed Axes': '1H Axe',
+        'Two-Handed Axes': '2H Axe',
+        'One-Handed Maces': '1H Mace',
+        'Two-Handed Maces': '2H Mace',
+        'One-Handed Swords': '1H Sword',
+        'Two-Handed Swords': '2H Sword',
+        'Daggers': 'Dagger',
+        'Fist Weapons': 'Fist Weapon',
+        'Polearms': 'Polearm',
+        'Staves': 'Staff',
+        'Wands': 'Wand',
+        'Shields': 'Shield',
+        'Held In Off-hand': 'Off-hand',
+        'Other': 'Other'
+      };
+
+      // Map of equipLoc values to Gear Slot display names
+      const gearSlotMap = {
+        'Head': 'Head',
+        'Neck': 'Neck',
+        'Shoulder': 'Shoulder',
+        'Chest': 'Chest',
+        'Waist': 'Waist',
+        'Legs': 'Legs',
+        'Feet': 'Feet',
+        'Wrist': 'Wrist',
+        'Hands': 'Hands',
+        'Finger': 'Ring',
+        'Trinket': 'Trinket',
+        'Back': 'Cloak',
+        'Main Hand': 'Main Hand',
+        'Off Hand': 'Off Hand',
+        'Ranged': 'Ranged',
+        'Two Hand': '2-Hand',
+        'Held In Off-hand': 'Off-hand',
+        'Blacksmithing': 'Crafting',
+        'Jewelcrafting': 'Crafting',
+        'Bows': 'Bow',
+        'Crossbows': 'Crossbow',
+        'Guns': 'Gun'
+      };
+
+      const dataObjects = lines
+        .slice(1)
+        .map(l => l.split('\t'))
+        .filter(vals => vals.some(v => v.trim() !== ''))
+        .map(vals => {
+          const obj = {};
+          headers.forEach((h, i) => {
+            const key = h.trim() || `Col${i + 1}`;
+            let val = vals[i] ?? '';
+            // Extract URL from Excel HYPERLINK formula: =HYPERLINK("URL";"Display Text")
+            if (val.startsWith('=HYPERLINK(')) {
+              const urlMatch = val.match(/=HYPERLINK\("([^"]+)"/);
+              if (urlMatch) val = urlMatch[1];
+            }
+            // Convert TIME field from 24-hour to 12-hour format
+            if (key.toLowerCase() === 'time' && val.match(/^\d{1,2}:\d{2}:\d{2}$/)) {
+              const [hours, mins, secs] = val.split(':').map(Number);
+              const period = hours >= 12 ? 'PM' : 'AM';
+              const hours12 = hours % 12 || 12;
+              val = `${hours12}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')} ${period}`;
+            }
+            // Map Armor Type values
+            if (key === 'Armor Type' && val && armorTypeMap[val]) {
+              val = armorTypeMap[val];
+            }
+            // Map Gear Slot values
+            if (key === 'Gear Slot' && val && gearSlotMap[val]) {
+              val = gearSlotMap[val];
+            }
+            obj[key] = val;
+          });
+          return obj;
+        });
+
+      if (dataObjects.length === 0) {
+        showError('Only a header row was found — no data rows to add.');
+        return;
+      }
+
+      const { added, skipped } = await addRowsToDB(dataObjects);
+
+      const parts = [];
+      if (added > 0) parts.push(`${added} row${added !== 1 ? 's' : ''} added`);
+      if (skipped > 0) parts.push(`${skipped} duplicate${skipped !== 1 ? 's' : ''} skipped`);
+      const type = added === 0 ? 'warning' : 'success';
+      showNotify(parts.join(' · ') || 'No changes made.', type);
+
+      await refreshDisplay();
+    }
+
+    // ── Display ──────────────────────────────────────────────────────────────
+    async function refreshDisplay() {
+      try {
+        const records = await getAllRows();
+        records.sort((a, b) => a.insertedAt - b.insertedAt);
+
+      updateDBCount(records.length);
+
+      if (records.length === 0) {
+        document.getElementById('output').innerHTML =
+          '<div class="empty-state">No data in database yet — paste some TSV to get started.</div>';
+        document.getElementById('view-toggle').style.display = 'none';
+        document.getElementById('stats').textContent = '';
+        return;
+      }
+
+      // Build ordered column list: union of all keys, preserving first-seen order, excluding hidden
+      const colSet = new Set();
+      records.forEach(r => Object.keys(r.data).forEach(k => {
+        if (!HIDDEN_COLS.has(k)) colSet.add(k);
+      }));
+      const headers = [...colSet];
+      const rows = records.map(r => r.data);
+
+      // Update season filter with available seasons
+      updateSeasonFilter(rows);
+
+      // Apply season filter
+      let seasonFilteredRows = rows.filter(row => filterBySeasonDate(row));
+
+      document.getElementById('stats').textContent =
+        `${seasonFilteredRows.length} row${seasonFilteredRows.length !== 1 ? 's' : ''}, ${headers.length} column${headers.length !== 1 ? 's' : ''}`;
+      document.getElementById('view-toggle').style.display = 'flex';
+
+      // Show/hide card tabs and filter rows based on current view and tab
+      const tabsEl = document.getElementById('card-tabs');
+      let filteredRows = seasonFilteredRows;
+      const professions = new Set(['Alchemy', 'Blacksmithing', 'Enchanting', 'Engineering', 'Inscription', 'Jewelcrafting', 'Leatherworking', 'Cooking', 'Other']);
+
+      if (currentView === 'cards') {
+        tabsEl.style.display = 'flex';
+
+        // Calculate unfiltered rows for each tab
+        let gearRowsUnfiltered = seasonFilteredRows.filter(row =>
+          row.response !== 'Personal Loot - Non tradeable' && !professions.has(row['Armor Type'])
+        );
+        let untradeableRowsUnfiltered = seasonFilteredRows.filter(row => row.response === 'Personal Loot - Non tradeable');
+        let professionsRowsUnfiltered = seasonFilteredRows.filter(row => professions.has(row['Armor Type']));
+
+        // Populate boss and response filter dropdowns from current tab only (before applying filters)
+        const tabRowsForFilters = currentCardTab === 'untradeable'
+          ? untradeableRowsUnfiltered
+          : currentCardTab === 'professions'
+          ? professionsRowsUnfiltered
+          : gearRowsUnfiltered;
+
+        // Response filter
+        const responseSet = new Set();
+        tabRowsForFilters.forEach(row => {
+          if (row.response) responseSet.add(row.response);
+        });
+        let sortedResponses = Array.from(responseSet).sort();
+
+        // If boss filter is active, only show responses available for that boss
+        if (currentBossFilter) {
+          const responsesForBoss = new Set();
+          tabRowsForFilters.forEach(row => {
+            if (row.boss === currentBossFilter && row.response) {
+              responsesForBoss.add(row.response);
+            }
+          });
+          sortedResponses = Array.from(responsesForBoss).sort();
+        }
+
+        const responseSelect = document.getElementById('response-filter');
+        const currentResponseValue = responseSelect.value;
+        responseSelect.innerHTML = '<option value="">All Responses</option>';
+        sortedResponses.forEach(response => {
+          const option = document.createElement('option');
+          option.value = response;
+          option.textContent = response;
+          responseSelect.appendChild(option);
+        });
+        responseSelect.value = currentResponseValue; // Restore previous selection if still valid
+        responseSelect.disabled = sortedResponses.length === 0; // Disable if no options
+
+        // Boss filter
+        const bossSet = new Set();
+        tabRowsForFilters.forEach(row => {
+          if (row.boss) bossSet.add(row.boss);
+        });
+        let sortedBosses = Array.from(bossSet).sort();
+
+        // If response filter is active, only show bosses available for that response
+        if (currentResponseFilter) {
+          const bossesForResponse = new Set();
+          tabRowsForFilters.forEach(row => {
+            if (row.response === currentResponseFilter && row.boss) {
+              bossesForResponse.add(row.boss);
+            }
+          });
+          sortedBosses = Array.from(bossesForResponse).sort();
+        }
+
+        const bossSelect = document.getElementById('boss-filter');
+        const currentBossValue = bossSelect.value;
+        bossSelect.innerHTML = '<option value="">All Bosses</option>';
+        sortedBosses.forEach(boss => {
+          const option = document.createElement('option');
+          option.value = boss;
+          option.textContent = boss;
+          bossSelect.appendChild(option);
+        });
+        bossSelect.value = currentBossValue; // Restore previous selection if still valid
+        bossSelect.disabled = sortedBosses.length === 0; // Disable if no options
+
+        // Now apply boss and response filters to all row sets if one is selected
+        let gearRows = gearRowsUnfiltered;
+        let untradeableRows = untradeableRowsUnfiltered;
+        let professionsRows = professionsRowsUnfiltered;
+
+        if (currentBossFilter) {
+          gearRows = gearRows.filter(row => row.boss === currentBossFilter);
+          untradeableRows = untradeableRows.filter(row => row.boss === currentBossFilter);
+          professionsRows = professionsRows.filter(row => row.boss === currentBossFilter);
+        }
+
+        if (currentResponseFilter) {
+          gearRows = gearRows.filter(row => row.response === currentResponseFilter);
+          untradeableRows = untradeableRows.filter(row => row.response === currentResponseFilter);
+          professionsRows = professionsRows.filter(row => row.response === currentResponseFilter);
+        }
+
+        // Update tab button text with counts
+        document.querySelector('[data-tab="gear"]').textContent = `Gear (${gearRows.length})`;
+        document.querySelector('[data-tab="untradeable"]').textContent = `Untradeable PL (${untradeableRows.length})`;
+        document.querySelector('[data-tab="professions"]').textContent = `Professions (${professionsRows.length})`;
+
+        // Filter rows based on current card tab
+        if (currentCardTab === 'untradeable') {
+          filteredRows = untradeableRows;
+        } else if (currentCardTab === 'professions') {
+          filteredRows = professionsRows;
+        } else {
+          // 'gear' tab: exclude both untradeable and professions
+          filteredRows = gearRows;
+        }
+      } else {
+        tabsEl.style.display = 'none';
+      }
+
+      const out = document.getElementById('output');
+      out.innerHTML = currentView === 'table'
+        ? renderTable(headers, seasonFilteredRows)
+        : renderCards(headers, filteredRows);
+
+      // Re-initialise Wowhead tooltips on the new content
+      if (typeof $WowheadPower !== 'undefined') {
+        setTimeout(() => $WowheadPower.refreshLinks(), 100);
+      }
+      } catch (err) {
+        console.error('[refreshDisplay] Error:', err);
+        showError('Error refreshing display: ' + (err?.message || err));
+      }
+    }
+
+    function setView(view) {
+      currentView = view;
+      document.getElementById('view-select').value = view;
+      refreshDisplay();
+    }
+
+    function setCardTab(tab) {
+      currentCardTab = tab;
+      // Update active tab styling
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-tab') === tab) {
+          btn.classList.add('active');
+        }
+      });
+
+      // Check if current boss/response filters have any results in the new tab
+      // If not, reset the filters
+      if (currentBossFilter || currentResponseFilter) {
+        // Get all rows and filter by tab type
+        getAllRows().then(records => {
+            const rows = records.map(r => r.data);
+            const professions = new Set(['Alchemy', 'Blacksmithing', 'Enchanting', 'Engineering', 'Inscription', 'Jewelcrafting', 'Leatherworking', 'Cooking', 'Other']);
+
+            let tabRows;
+            if (tab === 'untradeable') {
+              tabRows = rows.filter(row => row.response === 'Personal Loot - Non tradeable');
+            } else if (tab === 'professions') {
+              tabRows = rows.filter(row => professions.has(row['Armor Type']));
+            } else {
+              tabRows = rows.filter(row =>
+                row.response !== 'Personal Loot - Non tradeable' && !professions.has(row['Armor Type'])
+              );
+            }
+
+            // Check if any rows match the current boss filter
+            if (currentBossFilter) {
+              const hasBossResults = tabRows.some(row => row.boss === currentBossFilter);
+              if (!hasBossResults) {
+                currentBossFilter = ''; // Reset filter if no results
+                document.getElementById('boss-filter').value = '';
+              }
+            }
+
+            // Check if any rows match the current response filter
+            if (currentResponseFilter) {
+              const hasResponseResults = tabRows.some(row => row.response === currentResponseFilter);
+              if (!hasResponseResults) {
+                currentResponseFilter = ''; // Reset filter if no results
+                document.getElementById('response-filter').value = '';
+              }
+            }
+
+            refreshDisplay();
+        });
+      } else {
+        refreshDisplay();
+      }
+    }
+
+    function setBossFilter(boss) {
+      currentBossFilter = boss;
+      refreshDisplay();
+    }
+
+    function setResponseFilter(response) {
+      currentResponseFilter = response;
+      refreshDisplay();
+    }
+
+    function cellContent(val) {
+      if (!val) return '<span style="opacity:0.4">—</span>';
+      // Convert to string (val might be a number or other type)
+      const strVal = String(val);
+      // If it's a Wowhead URL, convert to a link for tooltip processing
+      if (strVal.includes('wowhead.com')) {
+        return `<a href="${esc(strVal)}" data-wh-icon="true"></a>`;
+      }
+      return esc(strVal);
+    }
+
+    function renderTable(headers, rows) {
+      const ths = headers.map(h => `<th>${esc(h)}</th>`).join('');
+      const trs = rows.map(row => {
+        const tds = headers.map(h => `<td>${cellContent(row[h] ?? '')}</td>`).join('');
+        return `<tr>${tds}</tr>`;
+      }).join('');
+      return `<div class="table-wrapper"><table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`;
+    }
+
+    function renderCards(headers, rows) {
+      // Group rows by date
+      const groupedByDate = {};
+      rows.forEach(row => {
+        const date = row.date || 'No Date';
+        if (!groupedByDate[date]) {
+          groupedByDate[date] = [];
+        }
+        groupedByDate[date].push(row);
+      });
+
+      // Sort dates (most recent first)
+      const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
+        if (a === 'No Date') return 1;
+        if (b === 'No Date') return -1;
+        return new Date(b) - new Date(a);
+      });
+
+      // Generate HTML for each date group
+      const dateGroups = sortedDates.map(date => {
+        const cardsForDate = groupedByDate[date];
+        const cardsHTML = cardsForDate.map(row => {
+          const fields = headers.map(h => `
+            <div class="card-field">
+              <span class="field-key">${esc(h)}</span>
+              <span class="field-value">${cellContent(row[h] ?? '')}</span>
+            </div>`).join('');
+          return `<div class="card">${fields}</div>`;
+        }).join('');
+
+        const dateId = 'date-' + (date === 'No Date' ? 'no-date' : date.replace(/\//g, '-'));
+        const displayDate = date === 'No Date' ? 'No Date' : new Date(date + ' 00:00').toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+
+        return `
+          <div class="date-group">
+            <div class="date-header collapsed" id="${dateId}-header" onclick="toggleDateGroup('${dateId}')">
+              <div class="date-header-toggle">▼</div>
+              <div class="date-header-title">${esc(displayDate)}</div>
+              <div class="date-header-count">${cardsForDate.length} item${cardsForDate.length !== 1 ? 's' : ''}</div>
+            </div>
+            <div class="date-cards hidden" id="${dateId}-cards">
+              ${cardsHTML}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `<div class="card-list">${dateGroups}</div>`;
+    }
+
+    function toggleDateGroup(dateId) {
+      const header = document.getElementById(dateId + '-header');
+      const cards = document.getElementById(dateId + '-cards');
+
+      if (header && cards) {
+        header.classList.toggle('collapsed');
+        cards.classList.toggle('hidden');
+      }
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ── Actions ──────────────────────────────────────────────────────────────
+    function clearInput() {
+      document.getElementById('tsv-input').value = '';
+      hideError();
+    }
+
+    function confirmClearDB() {
+      if (confirm('Delete all rows from the database? This cannot be undone.')) {
+        clearAllRows().then(refreshDisplay);
+      }
+    }
+
+    // Auto-process on paste (with delay to ensure text is inserted)
+    document.getElementById('tsv-input').addEventListener('paste', () => {
+      setTimeout(processInput, 200);
+    });
+
+    // ── One-time migration: clean ITEM field on existing rows ─────────────────
+    async function migrateItemField() {
+      if (localStorage.getItem('tsv_item_cleanup_v1')) return;
+
+      const records = await getAllRows();
+      const toFix = records.filter(r => {
+        const key = Object.keys(r.data).find(k => k.toLowerCase() === 'item');
+        return key && r.data[key].includes('"');
+      });
+
+      if (toFix.length > 0) {
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction('rows', 'readwrite');
+          const store = tx.objectStore('rows');
+
+          toFix.forEach(record => {
+            const itemKey = Object.keys(record.data).find(k => k.toLowerCase() === 'item');
+            const val = record.data[itemKey];
+            const first = val.indexOf('"');
+            const second = val.indexOf('"', first + 1);
+            if (first !== -1 && second !== -1) {
+              const newData = { ...record.data, [itemKey]: val.substring(first + 1, second) };
+              store.delete(record.key);
+              store.add({ key: rowKey(newData), data: newData, insertedAt: record.insertedAt });
+            }
+          });
+
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error);
+        });
+      }
+
+      localStorage.setItem('tsv_item_cleanup_v1', '1');
+    }
+
+    // ── One-time migration: clean GEAR1/GEAR2 fields on existing rows ─────────
+    async function migrateGearFields() {
+      if (localStorage.getItem('tsv_gear_cleanup_v3')) return;
+
+      const records = await getAllRows();
+      // Re-process any row that has a GEAR1/GEAR2 field — catches both raw and
+      // previously mis-processed rows (wrong ID extracted by old regex)
+      const toFix = records.filter(r =>
+        ['gear1', 'gear2'].some(g =>
+          Object.keys(r.data).some(k => k.toLowerCase() === g)
+        )
+      );
+
+      if (toFix.length > 0) {
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction('rows', 'readwrite');
+          const store = tx.objectStore('rows');
+
+          toFix.forEach(record => {
+            const newData = { ...record.data };
+            ['gear1', 'gear2'].forEach(g => {
+              const k = Object.keys(newData).find(k => k.toLowerCase() === g);
+              if (!k) return;
+              const raw = newData[k];
+              if (raw.includes('"')) {
+                // Raw value still has quotes — extract ID and name
+                newData[`_${g}_id`] = extractItemId(raw);
+                newData[k] = extractBetweenQuotes(raw);
+              } else {
+                // Already cleaned — re-run ID extraction on original stored value
+                // (ID may have been wrong from old regex; try again on current value)
+                newData[`_${g}_id`] = extractItemId(raw + '"');
+              }
+            });
+            store.delete(record.key);
+            store.add({ key: rowKey(newData), data: newData, insertedAt: record.insertedAt });
+          });
+
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error);
+        });
+      }
+
+      localStorage.setItem('tsv_gear_cleanup_v3', '1');
+    }
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+    window.addEventListener('load', () => {
+      console.log('[Init] Page loaded, checking Wowhead...');
+      if (typeof $WowheadPower === 'undefined') {
+        console.warn('[Init] Wowhead script not loaded. This may block tooltips.');
+      } else {
+        console.log('[Init] Wowhead script loaded successfully');
+      }
+
+      // Initialize Google Sign-In
+      setTimeout(() => {
+        restoreUserSession();
+        initializeGoogleSignIn();
+      }, 500);
+    });
+
+    // Initialize seasons data and refresh display
+    loadSeasonsData()
+      .then(() => {
+        navigateTo('loot'); // Initialize to show loot view
+        refreshDisplay();
+      })
+      .catch(err => showError('Failed to initialize: ' + err.message));
+  </script>
+
+</body>
+</html>
