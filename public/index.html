@@ -163,6 +163,18 @@
       border-color: var(--accent);
     }
 
+    .nav-icon {
+      width: 24px;
+      height: 24px;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+      display: inline-block;
+    }
+
+    .sidebar.sidebar-collapsed .nav-icon {
+      margin-right: 0;
+    }
+
     .main-content {
       flex: 1;
       display: flex;
@@ -1146,7 +1158,7 @@
     <div class="sidebar">
       <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">▶</button>
       <nav class="sidebar-nav">
-        <button class="sidebar-nav-btn active" id="loot-nav-btn" onclick="navigateTo('loot')">Loot</button>
+        <button class="sidebar-nav-btn active" id="loot-nav-btn" onclick="navigateTo('loot')"><img src="/treasure-chest.svg" class="nav-icon" alt="Loot"> Loot</button>
         <button class="sidebar-nav-btn" id="roster-nav-btn" onclick="navigateTo('roster')">Roster</button>
         <button class="sidebar-nav-btn" id="admin-nav-btn" onclick="navigateTo('admin')">Admin</button>
       </nav>
