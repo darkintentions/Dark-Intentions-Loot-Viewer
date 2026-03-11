@@ -2424,10 +2424,10 @@
           professionsRows = professionsRows.filter(row => row.response === currentResponseFilter);
         }
 
-        // Update tab button text
-        document.querySelector('[data-tab="gear"]').textContent = 'Gear';
-        document.querySelector('[data-tab="untradeable"]').textContent = 'Untradeable PL';
-        document.querySelector('[data-tab="professions"]').textContent = 'Professions';
+        // Update tab button text with counts
+        document.querySelector('[data-tab="gear"]').textContent = `Gear (${gearRows.length})`;
+        document.querySelector('[data-tab="untradeable"]').textContent = `Untradeable PL (${untradeableRows.length})`;
+        document.querySelector('[data-tab="professions"]').textContent = `Professions (${professionsRows.length})`;
 
         // Filter rows based on current card tab
         if (currentCardTab === 'untradeable') {
