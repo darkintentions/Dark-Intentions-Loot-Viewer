@@ -11,8 +11,11 @@
   <!-- Inner border -->
   <circle cx="50" cy="50" r="45" stroke="#8b7520" stroke-width="2" fill="none"/>
 
-  <!-- Text: +1 -->
-  <text x="50" y="60" font-size="36" font-weight="bold" text-anchor="middle" fill="#8b7520" font-family="Arial, sans-serif">+1</text>
+  <!-- Text shadow -->
+  <text x="50" y="62" font-size="48" font-weight="900" text-anchor="middle" fill="#000000" opacity="0.3" font-family="Arial, sans-serif" letter-spacing="2">+1</text>
+
+  <!-- Text: +1 with outline -->
+  <text x="50" y="60" font-size="48" font-weight="900" text-anchor="middle" fill="#ffffff" stroke="#2c2416" stroke-width="1.5" font-family="Arial, sans-serif" letter-spacing="2">+1</text>
 
   <!-- Gradient definition for shine effect -->
   <defs>
