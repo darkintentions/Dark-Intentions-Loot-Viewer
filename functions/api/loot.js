@@ -46,6 +46,20 @@ async function ensureTableExists(env) {
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_player ON loot(player)`).run();
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_date ON loot(date)`).run();
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_boss ON loot(boss)`).run();
+
+    // Create roster table if it doesn't exist
+    await env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS roster (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        player TEXT NOT NULL UNIQUE,
+        ep REAL DEFAULT 0,
+        gp REAL DEFAULT 2,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`
+    ).run();
+
+    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_roster_player ON roster(player)`).run();
   } catch (error) {
     console.error('Error ensuring table exists:', error);
     // Table might already exist, continue anyway
