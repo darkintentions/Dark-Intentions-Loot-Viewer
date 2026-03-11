@@ -1585,10 +1585,10 @@
 
         // Calculate unfiltered rows for each tab
         let gearRowsUnfiltered = seasonFilteredRows.filter(row =>
-          row.response !== 'Personal Loot - Non tradeable' && !professions.has(row['Armor Type'])
+          row.response !== 'Personal Loot - Non tradeable' && !professions.has(row.armor_type)
         );
         let untradeableRowsUnfiltered = seasonFilteredRows.filter(row => row.response === 'Personal Loot - Non tradeable');
-        let professionsRowsUnfiltered = seasonFilteredRows.filter(row => professions.has(row['Armor Type']));
+        let professionsRowsUnfiltered = seasonFilteredRows.filter(row => professions.has(row.armor_type));
 
         // Populate boss and response filter dropdowns from current tab only (before applying filters)
         const tabRowsForFilters = currentCardTab === 'untradeable'
@@ -1735,10 +1735,10 @@
             if (tab === 'untradeable') {
               tabRows = rows.filter(row => row.response === 'Personal Loot - Non tradeable');
             } else if (tab === 'professions') {
-              tabRows = rows.filter(row => professions.has(row['Armor Type']));
+              tabRows = rows.filter(row => professions.has(row.armor_type));
             } else {
               tabRows = rows.filter(row =>
-                row.response !== 'Personal Loot - Non tradeable' && !professions.has(row['Armor Type'])
+                row.response !== 'Personal Loot - Non tradeable' && !professions.has(row.armor_type)
               );
             }
 
