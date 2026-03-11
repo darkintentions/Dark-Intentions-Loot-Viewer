@@ -1,0 +1,14 @@
+# This file is for Cloudflare Pages deployment
+
+name = "loot"
+compatibility_date = "2025-09-27"
+compatibility_flags = ["nodejs_compat"]
+
+# Respect .gitignore to exclude node_modules
+upload = { exclude_git_ignore = true }
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "loot-epgp"
+database_id = "468abc42-381f-4a0f-8708-e4d98e3a1e92"
