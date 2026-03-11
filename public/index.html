@@ -1154,10 +1154,25 @@
 
     async function addRowsToDB(dataObjects) {
       try {
+        // Normalize column names to match database schema (snake_case)
+        const normalizeKeys = (obj) => {
+          const normalized = {};
+          for (const [key, value] of Object.entries(obj)) {
+            const normalizedKey = key
+              .toLowerCase()
+              .replace(/\s+/g, '_')
+              .replace(/[^a-z0-9_]/g, '');
+            normalized[normalizedKey] = value;
+          }
+          return normalized;
+        };
+
+        const normalizedRows = dataObjects.map(normalizeKeys);
+
         const response = await fetch(API_BASE, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rows: dataObjects })
+          body: JSON.stringify({ rows: normalizedRows })
         });
 
         if (!response.ok) {
