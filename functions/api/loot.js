@@ -92,6 +92,24 @@ async function ensureTableExists(env) {
       )`
     ).run();
 
+    // Ensure player column exists in EP table
+    try {
+      await env.DB.prepare(`ALTER TABLE ep ADD COLUMN player TEXT NOT NULL DEFAULT ''`).run();
+    } catch (error) {
+      if (!error.message.includes('duplicate column')) {
+        console.warn('Could not add player column to ep:', error.message);
+      }
+    }
+
+    // Ensure player column exists in GP table
+    try {
+      await env.DB.prepare(`ALTER TABLE gp ADD COLUMN player TEXT NOT NULL DEFAULT ''`).run();
+    } catch (error) {
+      if (!error.message.includes('duplicate column')) {
+        console.warn('Could not add player column to gp:', error.message);
+      }
+    }
+
     // Create indexes
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_ep_player ON ep(player)`).run();
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_gp_player ON gp(player)`).run();
