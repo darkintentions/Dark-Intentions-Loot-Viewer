@@ -1149,85 +1149,79 @@
       refreshDisplay();
     }
 
-    // ── IndexedDB ────────────────────────────────────────────────────────────
-    const DB_NAME = 'TSVViewerDB';
-    const DB_VERSION = 1;
-    let db;
+    // ── Cloudflare D1 Database API ──────────────────────────────────────────
+    const API_BASE = '/api/loot';
 
-    function openDB() {
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open(DB_NAME, DB_VERSION);
-        req.onupgradeneeded = e => {
-          const d = e.target.result;
-          if (!d.objectStoreNames.contains('rows')) {
-            d.createObjectStore('rows', { keyPath: 'key' });
-          }
-        };
-        req.onsuccess = e => resolve(e.target.result);
-        req.onerror = e => reject(e.target.error);
-      });
-    }
-
-    // Use player, date, itemID, and response as unique key for deduplication
-    function rowKey(dataObj) {
+    async function addRowsToDB(dataObjects) {
       try {
-        const key = {
-          player: dataObj.player || '',
-          date: dataObj.date || '',
-          itemID: dataObj.itemID || '',
-          response: dataObj.response || ''
+        const response = await fetch(API_BASE, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rows: dataObjects })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to add rows');
+        }
+
+        const result = await response.json();
+        return {
+          added: result.added,
+          skipped: result.skipped
         };
-        return JSON.stringify(key);
       } catch (err) {
-        console.error('[rowKey] Error creating key:', err, 'Data:', dataObj);
+        console.error('[addRowsToDB] API error:', err);
         throw err;
       }
     }
 
-    function addRowsToDB(dataObjects) {
-      return new Promise((resolve, reject) => {
-        let added = 0, skipped = 0;
-        const tx = db.transaction('rows', 'readwrite');
-        const store = tx.objectStore('rows');
-
-        dataObjects.forEach((data, i) => {
-          try {
-            const key = rowKey(data);
-            const req = store.add({ key, data, insertedAt: Date.now() + i });
-            req.onsuccess = () => added++;
-            req.onerror = (e) => {
-              if (e.target.error?.name === 'ConstraintError') {
-                skipped++;
-              }
-              e.preventDefault(); // prevent transaction abort
-            };
-          } catch (err) {
-            console.error('[addRowsToDB] Error creating key for row', i, ':', err);
-          }
+    async function getAllRows() {
+      try {
+        const response = await fetch(API_BASE, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
         });
 
-        tx.oncomplete = () => resolve({ added, skipped });
-        tx.onerror = () => resolve({ added, skipped }); // Still resolve with partial results
-        tx.onabort = () => resolve({ added, skipped }); // Still resolve with partial results
-      });
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to fetch rows');
+        }
+
+        const result = await response.json();
+        // Transform API response to match old IndexedDB format
+        return result.data.map(row => ({
+          key: JSON.stringify({
+            player: row.player,
+            date: row.date,
+            itemID: row.item,
+            response: row.response
+          }),
+          data: row
+        }));
+      } catch (err) {
+        console.error('[getAllRows] API error:', err);
+        throw err;
+      }
     }
 
-    function getAllRows() {
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('rows', 'readonly');
-        const req = tx.objectStore('rows').getAll();
-        req.onsuccess = e => resolve(e.target.result);
-        req.onerror = e => reject(e.target.error);
-      });
-    }
+    async function clearAllRows() {
+      try {
+        const response = await fetch(API_BASE, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
 
-    function clearAllRows() {
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('rows', 'readwrite');
-        tx.objectStore('rows').clear();
-        tx.oncomplete = resolve;
-        tx.onerror = () => reject(tx.error);
-      });
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to clear rows');
+        }
+
+        return await response.json();
+      } catch (err) {
+        console.error('[clearAllRows] API error:', err);
+        throw err;
+      }
     }
 
     // ── Hidden columns (stored in DB but not displayed) ──────────────────────
@@ -1712,9 +1706,7 @@
       // If not, reset the filters
       if (currentBossFilter || currentResponseFilter) {
         // Get all rows and filter by tab type
-        openDB().then(d => {
-          db = d;
-          getAllRows().then(records => {
+        getAllRows().then(records => {
             const rows = records.map(r => r.data);
             const professions = new Set(['Alchemy', 'Blacksmithing', 'Enchanting', 'Engineering', 'Inscription', 'Jewelcrafting', 'Leatherworking', 'Cooking', 'Other']);
 
@@ -1748,7 +1740,6 @@
             }
 
             refreshDisplay();
-          });
         });
       } else {
         refreshDisplay();
@@ -1970,12 +1961,8 @@
       }, 500);
     });
 
-    // Initialize both seasons data and database together
-    Promise.all([
-      loadSeasonsData(),
-      openDB().then(d => { db = d; return migrateItemField(); })
-    ])
-      .then(() => migrateGearFields())
+    // Initialize seasons data and refresh display
+    loadSeasonsData()
       .then(refreshDisplay)
       .catch(err => showError('Failed to initialize: ' + err.message));
   </script>
