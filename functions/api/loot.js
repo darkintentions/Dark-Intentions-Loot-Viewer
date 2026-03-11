@@ -25,6 +25,25 @@ async function ensureTableExists(env) {
       )`
     ).run();
 
+    // Add new columns if they don't exist (for existing tables)
+    const columnsToAdd = [
+      { name: 'class', type: 'TEXT' },
+      { name: 'instance', type: 'TEXT' },
+      { name: 'equiploc', type: 'TEXT' },
+      { name: 'note', type: 'TEXT' }
+    ];
+
+    for (const col of columnsToAdd) {
+      try {
+        await env.DB.prepare(`ALTER TABLE loot ADD COLUMN ${col.name} ${col.type}`).run();
+      } catch (error) {
+        // Column already exists, ignore
+        if (!error.message.includes('duplicate column')) {
+          console.warn(`Could not add column ${col.name}:`, error.message);
+        }
+      }
+    }
+
     // Create indexes if they don't exist
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_player ON loot(player)`).run();
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_date ON loot(date)`).run();
