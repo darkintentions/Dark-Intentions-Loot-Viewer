@@ -1277,6 +1277,7 @@
       <nav class="sidebar-nav">
         <button class="sidebar-nav-btn active" id="loot-nav-btn" onclick="navigateTo('loot')"><img src="/loot-icon.jpg" class="nav-icon" alt="Loot"> Loot</button>
         <button class="sidebar-nav-btn" id="roster-nav-btn" onclick="navigateTo('roster')"><img src="/roster-icon.jpg" class="nav-icon" alt="Roster"> Roster</button>
+        <button class="sidebar-nav-btn" id="epgp-nav-btn" onclick="navigateTo('epgp')">EPGP</button>
         <button class="sidebar-nav-btn" id="admin-nav-btn" onclick="navigateTo('admin')"><img src="/admin-icon.jpg" class="nav-icon" alt="Admin"> Admin</button>
       </nav>
     </div>
@@ -1320,6 +1321,15 @@
     <div class="roster-container" id="roster-container"></div>
   </div>
 
+  <div id="epgp-view" class="view-section" style="display: none;">
+    <!-- Gear Slot Points Assignment -->
+    <div class="admin-section">
+      <div class="admin-section-title">Assign Gear Slot Points</div>
+      <div class="gear-slot-grid" id="gear-slot-grid"></div>
+      <button class="btn-primary" onclick="saveGearSlotPoints()">Save Points</button>
+    </div>
+  </div>
+
   <div id="admin-view" class="view-section" style="display: none;">
     <!-- TSV Input Section -->
     <div class="admin-section">
@@ -1335,13 +1345,6 @@
         <button class="btn-primary" onclick="processInput()">Add to Database</button>
         <button class="btn-ghost" onclick="clearInput()">Clear Input</button>
       </div>
-    </div>
-
-    <!-- Gear Slot Points Assignment -->
-    <div class="admin-section">
-      <div class="admin-section-title">Assign Gear Slot Points</div>
-      <div class="gear-slot-grid" id="gear-slot-grid"></div>
-      <button class="btn-primary" onclick="saveGearSlotPoints()">Save Points</button>
     </div>
 
     <!-- Player Management -->
@@ -1911,11 +1914,13 @@
       // Update button active states
       document.getElementById('loot-nav-btn').classList.toggle('active', page === 'loot');
       document.getElementById('roster-nav-btn').classList.toggle('active', page === 'roster');
+      document.getElementById('epgp-nav-btn').classList.toggle('active', page === 'epgp');
       document.getElementById('admin-nav-btn').classList.toggle('active', page === 'admin');
 
       // Toggle view sections
       document.getElementById('loot-view').style.display = page === 'loot' ? 'block' : 'none';
       document.getElementById('roster-view').style.display = page === 'roster' ? 'block' : 'none';
+      document.getElementById('epgp-view').style.display = page === 'epgp' ? 'block' : 'none';
       document.getElementById('admin-view').style.display = page === 'admin' ? 'block' : 'none';
 
       // Hide controls, tabs, and output based on view
@@ -1929,6 +1934,11 @@
       // Load roster if switching to roster view
       if (page === 'roster') {
         loadRoster();
+      }
+
+      // Load EPGP data if switching to EPGP view
+      if (page === 'epgp') {
+        loadEPGPView();
       }
 
       // Load admin data if switching to admin view
@@ -2290,11 +2300,20 @@
       modal.classList.remove('active');
     }
 
-    // ── Admin View ───────────────────────────────────────────────────────────
-    async function loadAdminView() {
+    // ── EPGP View ────────────────────────────────────────────────────────────
+    async function loadEPGPView() {
       try {
         // Load gear slot points
         loadGearSlotPoints();
+      } catch (err) {
+        console.error('[EPGP] Error loading EPGP view:', err);
+        showError('Error loading EPGP view: ' + err.message);
+      }
+    }
+
+    // ── Admin View ───────────────────────────────────────────────────────────
+    async function loadAdminView() {
+      try {
         // Load player list
         loadPlayerManagement();
       } catch (err) {
