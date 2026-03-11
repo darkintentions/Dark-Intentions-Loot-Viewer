@@ -106,6 +106,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-direction: column;
       width: 100%;
       padding: 1rem 0.5rem;
       background: var(--surface2);
@@ -116,6 +117,7 @@
       cursor: pointer;
       transition: all 0.15s;
       flex-shrink: 0;
+      gap: 0.3rem;
     }
 
     .sidebar-toggle:hover {
@@ -124,8 +126,19 @@
     }
 
     .sidebar:not(.sidebar-collapsed) .sidebar-toggle {
-      justify-content: flex-end;
-      padding-right: 1rem;
+      justify-content: center;
+      flex-direction: column;
+      padding: 1rem 0.5rem;
+    }
+
+    .sidebar-toggle .toggle-text {
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: none;
+    }
+
+    .sidebar:not(.sidebar-collapsed) .sidebar-toggle .toggle-text {
+      display: block;
     }
 
     .sidebar-nav {
@@ -1161,7 +1174,7 @@
   <div class="app-container">
     <!-- Sidebar -->
     <div class="sidebar">
-      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">✕</button>
+      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()"><span class="toggle-icon">◀</span><span class="toggle-text">Menu</span></button>
       <nav class="sidebar-nav">
         <button class="sidebar-nav-btn active" id="loot-nav-btn" onclick="navigateTo('loot')"><img src="/loot-icon.jpg" class="nav-icon" alt="Loot"> Loot</button>
         <button class="sidebar-nav-btn" id="roster-nav-btn" onclick="navigateTo('roster')"><img src="/roster-icon.jpg" class="nav-icon" alt="Roster"> Roster</button>
@@ -1830,13 +1843,14 @@
       sidebarExpanded = !sidebarExpanded;
       const sidebar = document.querySelector('.sidebar');
       const toggle = document.getElementById('sidebar-toggle');
+      const toggleIcon = toggle.querySelector('.toggle-icon');
 
       if (sidebarExpanded) {
         sidebar.classList.remove('sidebar-collapsed');
-        toggle.textContent = '✕';
+        toggleIcon.textContent = '◀';
       } else {
         sidebar.classList.add('sidebar-collapsed');
-        toggle.textContent = '☰';
+        toggleIcon.textContent = '☰';
       }
 
       // Save to localStorage
