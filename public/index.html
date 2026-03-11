@@ -863,13 +863,15 @@
       font-size: 1rem;
       font-weight: 600;
       color: var(--text);
-      margin-right: auto;
+      width: 100%;
+      text-align: left;
     }
 
     .player-info {
       display: flex;
-      align-items: center;
-      gap: 2rem;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
       flex: 1;
     }
 
@@ -879,7 +881,6 @@
       font-size: 0.85rem;
       color: var(--text-dim);
       justify-content: center;
-      flex: 1;
     }
 
     .stat-item {
