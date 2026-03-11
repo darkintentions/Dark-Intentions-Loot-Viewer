@@ -1028,6 +1028,30 @@
       padding-bottom: 1rem;
     }
 
+    .admin-section-title-with-description {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    .admin-section-title-with-description .admin-section-title {
+      margin-bottom: 0;
+      border-bottom: none;
+      padding-bottom: 0;
+      flex-shrink: 0;
+    }
+
+    .admin-section-description {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      text-align: right;
+      flex: 1;
+    }
+
     /* Gear Slot Points Assignment */
     .gear-slot-grid {
       display: grid;
@@ -1262,7 +1286,6 @@
       <div class="header-container">
         <div>
           <h1>Dark Intentions Loot Viewer</h1>
-          <p class="subtitle">Paste TSV data to add it to the local database. Duplicate rows are automatically skipped.</p>
         </div>
         <button class="btn-login" id="login-btn" onclick="handleLoginClick()">Log In</button>
       </div>
@@ -1300,7 +1323,10 @@
   <div id="admin-view" class="view-section" style="display: none;">
     <!-- TSV Input Section -->
     <div class="admin-section">
-      <div class="admin-section-title">Import Data</div>
+      <div class="admin-section-title-with-description">
+        <div class="admin-section-title">Import Data</div>
+        <div class="admin-section-description">Paste TSV data to add it to the local database. Duplicate rows are automatically skipped.</div>
+      </div>
       <div class="input-section">
         <label for="tsv-input">Paste TSV data</label>
         <textarea id="tsv-input" placeholder="Column A&#9;Column B&#9;Column C&#10;Value 1&#9;Value 2&#9;Value 3&#10;Value 4&#9;Value 5&#9;Value 6"></textarea>
