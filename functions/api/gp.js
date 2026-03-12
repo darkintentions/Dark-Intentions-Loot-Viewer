@@ -62,7 +62,7 @@ async function handleGet(env, request) {
 // POST /api/gp - Add GP entry
 async function handlePost(env, request) {
   try {
-    const { player, gp, reason } = await request.json();
+    const { player, gp, reason, timestamp } = await request.json();
 
     if (!player || gp === undefined) {
       return new Response(JSON.stringify({ error: 'player and gp are required' }), {
@@ -71,9 +71,16 @@ async function handlePost(env, request) {
       });
     }
 
-    await env.DB.prepare(
-      `INSERT INTO gp (player, gp, reason) VALUES (?, ?, ?)`
-    ).bind(player, parseFloat(gp), reason || null).run();
+    // Use provided timestamp or default to current time
+    if (timestamp) {
+      await env.DB.prepare(
+        `INSERT INTO gp (player, gp, reason, timestamp) VALUES (?, ?, ?, ?)`
+      ).bind(player, parseFloat(gp), reason || null, timestamp).run();
+    } else {
+      await env.DB.prepare(
+        `INSERT INTO gp (player, gp, reason) VALUES (?, ?, ?)`
+      ).bind(player, parseFloat(gp), reason || null).run();
+    }
 
     return new Response(JSON.stringify({
       success: true,

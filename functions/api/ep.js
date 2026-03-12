@@ -62,7 +62,7 @@ async function handleGet(env, request) {
 // POST /api/ep - Add EP entry
 async function handlePost(env, request) {
   try {
-    const { player, ep, reason } = await request.json();
+    const { player, ep, reason, timestamp } = await request.json();
 
     if (!player || ep === undefined) {
       return new Response(JSON.stringify({ error: 'player and ep are required' }), {
@@ -71,9 +71,16 @@ async function handlePost(env, request) {
       });
     }
 
-    await env.DB.prepare(
-      `INSERT INTO ep (player, ep, reason) VALUES (?, ?, ?)`
-    ).bind(player, parseFloat(ep), reason || null).run();
+    // Use provided timestamp or default to current time
+    if (timestamp) {
+      await env.DB.prepare(
+        `INSERT INTO ep (player, ep, reason, timestamp) VALUES (?, ?, ?, ?)`
+      ).bind(player, parseFloat(ep), reason || null, timestamp).run();
+    } else {
+      await env.DB.prepare(
+        `INSERT INTO ep (player, ep, reason) VALUES (?, ?, ?)`
+      ).bind(player, parseFloat(ep), reason || null).run();
+    }
 
     return new Response(JSON.stringify({
       success: true,

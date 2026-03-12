@@ -1,32 +1,48 @@
-{
-  "expansion": "The War Within",
-  "seasons": [
-    {
-      "seasonNumber": 1,
-      "seasonCode": 38,
-      "name": "The War Within Season 1",
-      "startDate": "2024-09-10",
-      "endDate": "2025-02-25",
-      "durationDays": 169,
-      "majorPatch": "11.0"
-    },
-    {
-      "seasonNumber": 2,
-      "seasonCode": 39,
-      "name": "The War Within Season 2",
-      "startDate": "2025-03-04",
-      "endDate": "2025-08-11",
-      "durationDays": 161,
-      "majorPatch": "11.1"
-    },
-    {
-      "seasonNumber": 3,
-      "seasonCode": 40,
-      "name": "The War Within Season 3",
-      "startDate": "2025-08-12",
-      "endDate": "2026-03-02",
-      "durationDays": 203,
-      "majorPatch": "11.2"
-    }
-  ]
-}
+[
+  {
+    "expansion": "The War Within",
+    "seasons": [
+      {
+        "seasonNumber": 1,
+        "seasonCode": 38,
+        "name": "The War Within Season 1",
+        "startDate": "2024-09-10",
+        "endDate": "2025-02-25",
+        "durationDays": 169,
+        "majorPatch": "11.0"
+      },
+      {
+        "seasonNumber": 2,
+        "seasonCode": 39,
+        "name": "The War Within Season 2",
+        "startDate": "2025-03-04",
+        "endDate": "2025-08-11",
+        "durationDays": 161,
+        "majorPatch": "11.1"
+      },
+      {
+        "seasonNumber": 3,
+        "seasonCode": 40,
+        "name": "The War Within Season 3",
+        "startDate": "2025-08-12",
+        "endDate": "2026-03-02",
+        "durationDays": 203,
+        "majorPatch": "11.2"
+      }
+    ]
+  },
+  {
+    "expansion": "Midnight",
+    "seasons": [
+      {
+        "seasonNumber": 1,
+        "seasonCode": 41,
+        "name": "Midnight Season 1",
+        "startDate": "2026-03-03",
+        "endDate": "2026-09-02",
+        "durationDays": 183,
+        "majorPatch": "12.0"
+      }
+    ]
+  }
+]

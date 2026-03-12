@@ -727,6 +727,7 @@
     /* ── SEASON FILTER ── */
     .season-filter-container {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 1rem;
       margin-bottom: 1.5rem;
@@ -778,6 +779,16 @@
       background: var(--surface);
       color: var(--text-dim);
       opacity: 0.6;
+    }
+
+    .season-filter-explanation {
+      width: 100%;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      font-style: italic;
+      margin-top: 0.5rem;
+      text-align: center;
+      line-height: 1.4;
     }
 
     /* Roster season filter styling */
@@ -1097,6 +1108,23 @@
       cursor: text;
     }
 
+    /* Datetime input styling */
+    #edit-points-datetime {
+      color-scheme: dark;
+      accent-color: #fff;
+    }
+
+    #edit-points-datetime::-webkit-calendar-picker-indicator {
+      filter: brightness(0) invert(1) saturate(2);
+      opacity: 1;
+      cursor: pointer;
+    }
+
+    #edit-points-datetime::-webkit-outer-spin-button,
+    #edit-points-datetime::-webkit-inner-spin-button {
+      filter: brightness(0) invert(1);
+    }
+
     /* Gear Slot Points Assignment */
     .gear-slot-grid {
       display: grid;
@@ -1276,6 +1304,19 @@
       background: var(--surface2);
     }
 
+    .points-history-table button {
+      padding: 0.25rem 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 1.1rem;
+      border-radius: 4px;
+    }
+
+    .points-history-table button:hover {
+      opacity: 0.8;
+      transform: scale(1.1);
+    }
+
     .points-history-empty {
       text-align: center;
       padding: 2rem;
@@ -1362,6 +1403,7 @@
       <select id="roster-season-filter" onchange="setRosterSeasonFilter(this.value)">
         <option value="">All Seasons</option>
       </select>
+      <div class="season-filter-explanation">Selecting a season will filter the points and history to only show you data and point tallies from that season.</div>
     </div>
     <div class="roster-container" id="roster-container"></div>
   </div>
@@ -1385,7 +1427,37 @@
           <label class="ep-form-label">Reason</label>
           <input id="ep-reason-input" class="ep-form-input" type="text" placeholder="Optional note" />
         </div>
-        <button class="btn-primary" onclick="addEffortPoints()" style="align-self: flex-end;">Add EP</button>
+        <button class="btn-primary" onclick="addEffortPoints()" style="align-self: flex-end;">Edit EP</button>
+      </div>
+    </div>
+
+    <!-- Add Gear Points -->
+    <div class="admin-section">
+      <div class="admin-section-title">Add Gear Points</div>
+      <div class="ep-form-container">
+        <div class="ep-form-group">
+          <label class="ep-form-label">Player</label>
+          <select id="gp-player-select" class="ep-form-input">
+            <option value="">Select a player</option>
+          </select>
+        </div>
+        <div class="ep-form-group">
+          <label class="ep-form-label">GP</label>
+          <input id="gp-value-input" class="ep-form-input" type="number" step="1" placeholder="0" />
+        </div>
+        <div class="ep-form-group">
+          <label class="ep-form-label">Item ID</label>
+          <input id="gp-item-id-input" class="ep-form-input" type="number" placeholder="Optional" />
+        </div>
+        <div class="ep-form-group" id="gp-item-preview" style="display: none; background: #2a3050; border: 1px solid #3a4070; padding: 10px; border-radius: 4px; font-size: 0.9em; color: #e0e0e0;">
+          <strong style="color: #64b5f6;">Fetched Item Data:</strong>
+          <div id="gp-item-preview-content" style="margin-top: 8px; color: #b0b0b0;"></div>
+        </div>
+        <div class="ep-form-group">
+          <label class="ep-form-label">Reason</label>
+          <input id="gp-reason-input" class="ep-form-input" type="text" placeholder="Optional note" />
+        </div>
+        <button class="btn-primary" onclick="addGearPoints()" style="align-self: flex-end;">Edit GP</button>
       </div>
     </div>
 
@@ -1412,6 +1484,7 @@
         <button class="btn-primary" onclick="processInput()">Add to Database</button>
         <button class="btn-ghost" onclick="clearInput()">Clear Input</button>
       </div>
+      <div id="import-notify" class="notify" style="margin-top: 1rem;"></div>
     </div>
 
     <!-- Player Management -->
@@ -1438,6 +1511,40 @@
         <button class="modal-close" onclick="closePointsHistoryModal()">&times;</button>
       </div>
       <div id="points-history-content"></div>
+    </div>
+  </div>
+
+  <!-- Edit Points Entry Modal -->
+  <div id="edit-points-modal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <h2>Edit Points Entry</h2>
+        <button class="modal-close" onclick="closeEditPointsModal()">&times;</button>
+      </div>
+      <div style="padding: 1.5rem;">
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div>
+            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">Type</label>
+            <input id="edit-points-type" type="text" readonly style="background: var(--surface2); color: var(--text-dim); padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; width: 100%; cursor: not-allowed;" />
+          </div>
+          <div>
+            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">Date & Time</label>
+            <input id="edit-points-datetime" type="datetime-local" style="background: var(--surface2); color: var(--text); padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; width: 100%;" />
+          </div>
+          <div>
+            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">Points</label>
+            <input id="edit-points-value" type="number" step="0.1" style="background: var(--surface2); color: var(--text); padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; width: 100%;" />
+          </div>
+          <div>
+            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">Reason</label>
+            <input id="edit-points-reason" type="text" style="background: var(--surface2); color: var(--text); padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; width: 100%;" placeholder="Optional note" />
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <button onclick="savePointsEdit()" class="btn-primary" style="flex: 1;">Save</button>
+            <button onclick="closeEditPointsModal()" style="flex: 1; background: var(--surface2); color: var(--text); border: 1px solid var(--border); padding: 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1501,6 +1608,11 @@
       const pointsHistoryModal = document.getElementById('points-history-modal');
       if (e.target === pointsHistoryModal) {
         closePointsHistoryModal();
+      }
+
+      const editPointsModal = document.getElementById('edit-points-modal');
+      if (e.target === editPointsModal) {
+        closeEditPointsModal();
       }
     });
 
@@ -1649,7 +1761,12 @@
 
       const availableSeasons = [];
 
-      seasonsData.seasons.forEach(season => {
+      // Handle both array of expansions and single expansion formats
+      const allSeasons = Array.isArray(seasonsData)
+        ? seasonsData.flatMap(exp => exp.seasons || [])
+        : seasonsData.seasons || [];
+
+      allSeasons.forEach(season => {
         const startDate = new Date(season.startDate);
         const endDate = new Date(season.endDate);
 
@@ -1694,7 +1811,11 @@
 
       // Rebuild options - show ALL seasons, but disable unavailable ones
       // Sort seasons by end date (latest first)
-      const sortedSeasons = [...seasonsData.seasons].sort((a, b) => {
+      const allSeasons = Array.isArray(seasonsData)
+        ? seasonsData.flatMap(exp => exp.seasons || [])
+        : seasonsData.seasons || [];
+
+      const sortedSeasons = [...allSeasons].sort((a, b) => {
         return new Date(b.endDate) - new Date(a.endDate);
       });
 
@@ -1718,13 +1839,16 @@
       // Restore selection if still valid
       select.value = currentValue;
 
-      console.log('[Seasons] Season filter updated. Available:', availableSeasons.length, 'Total:', seasonsData.seasons.length);
+      console.log('[Seasons] Season filter updated. Available:', availableSeasons.length, 'Total:', allSeasons.length);
     }
 
     function filterBySeasonDate(row) {
       if (!currentSeasonFilter || !seasonsData) return true;
 
-      const season = seasonsData.seasons.find(s => s.seasonCode == currentSeasonFilter);
+      const allSeasons = Array.isArray(seasonsData)
+        ? seasonsData.flatMap(exp => exp.seasons || [])
+        : seasonsData.seasons || [];
+      const season = allSeasons.find(s => s.seasonCode == currentSeasonFilter);
       if (!season) return true;
 
       if (!row.date) return false;
@@ -1851,9 +1975,10 @@
       }
     }
 
-    async function getEPData() {
+    async function getEPData(playerName = null) {
       try {
-        const response = await fetch('/api/ep', {
+        const url = playerName ? `/api/ep?player=${encodeURIComponent(playerName)}` : '/api/ep';
+        const response = await fetch(url, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -1862,16 +1987,21 @@
           return { data: [] };
         }
 
-        return await response.json();
+        const result = await response.json();
+        // Return history if available (player-specific query), otherwise return data
+        return {
+          data: result.history || result.data || []
+        };
       } catch (err) {
         console.error('[getEPData] Error:', err);
         return { data: [] };
       }
     }
 
-    async function getGPData() {
+    async function getGPData(playerName = null) {
       try {
-        const response = await fetch('/api/gp', {
+        const url = playerName ? `/api/gp?player=${encodeURIComponent(playerName)}` : '/api/gp';
+        const response = await fetch(url, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -1880,7 +2010,11 @@
           return { data: [] };
         }
 
-        return await response.json();
+        const result = await response.json();
+        // Return history if available (player-specific query), otherwise return data
+        return {
+          data: result.history || result.data || []
+        };
       } catch (err) {
         console.error('[getGPData] Error:', err);
         return { data: [] };
@@ -2056,25 +2190,50 @@
         const epResult = await getEPData();
         const gpResult = await getGPData();
 
-        // Build maps of EP and GP totals by player
+        // Determine season date range for filtering
+        let seasonStartDate = null;
+        let seasonEndDate = null;
+        if (currentRosterSeasonFilter && seasonsData) {
+          const allSeasons = Array.isArray(seasonsData)
+            ? seasonsData.flatMap(exp => exp.seasons || [])
+            : seasonsData.seasons || [];
+          const season = allSeasons.find(s => s.seasonCode == currentRosterSeasonFilter);
+          if (season) {
+            seasonStartDate = new Date(season.startDate);
+            seasonEndDate = new Date(season.endDate);
+          }
+        }
+
+        // Helper function to check if a timestamp is within the season
+        const isWithinSeason = (timestamp) => {
+          if (!seasonStartDate || !seasonEndDate) return true; // No season filter = include all
+          const date = new Date(timestamp);
+          return date >= seasonStartDate && date <= seasonEndDate;
+        };
+
+        // Build maps of EP and GP totals by player, filtered by season
         const epByPlayer = {};
         const gpByPlayer = {};
 
         if (epResult.data) {
           epResult.data.forEach(entry => {
+            if (!isWithinSeason(entry.timestamp)) return; // Skip if outside season
             if (!epByPlayer[entry.player]) {
               epByPlayer[entry.player] = 0;
             }
-            epByPlayer[entry.player] += parseFloat(entry.points) || 0;
+            // API returns either 'total' (for aggregated) or 'ep' (for history entries)
+            epByPlayer[entry.player] += parseFloat(entry.total || entry.ep) || 0;
           });
         }
 
         if (gpResult.data) {
           gpResult.data.forEach(entry => {
+            if (!isWithinSeason(entry.timestamp)) return; // Skip if outside season
             if (!gpByPlayer[entry.player]) {
               gpByPlayer[entry.player] = 0;
             }
-            gpByPlayer[entry.player] += parseFloat(entry.points) || 0;
+            // API returns either 'total' (for aggregated) or 'gp' (for history entries)
+            gpByPlayer[entry.player] += parseFloat(entry.total || entry.gp) || 0;
           });
         }
 
@@ -2082,17 +2241,12 @@
 
         // Filter records by season if one is selected
         let filteredRecords = records;
-        if (currentRosterSeasonFilter && seasonsData) {
-          const season = seasonsData.seasons.find(s => s.seasonCode == currentRosterSeasonFilter);
-          if (season) {
-            const startDate = new Date(season.startDate);
-            const endDate = new Date(season.endDate);
-            filteredRecords = records.filter(record => {
-              if (!record.data.date) return false;
-              const rowDate = new Date(record.data.date);
-              return rowDate >= startDate && rowDate <= endDate;
-            });
-          }
+        if (seasonStartDate && seasonEndDate) {
+          filteredRecords = records.filter(record => {
+            if (!record.data.date) return false;
+            const rowDate = new Date(record.data.date);
+            return rowDate >= seasonStartDate && rowDate <= seasonEndDate;
+          });
         }
 
         // Group data by player
@@ -2221,7 +2375,11 @@
       const currentValue = select.value;
 
       // Rebuild options - show ALL seasons, but disable unavailable ones
-      const sortedSeasons = [...seasonsData.seasons].sort((a, b) => {
+      const allSeasons = Array.isArray(seasonsData)
+        ? seasonsData.flatMap(exp => exp.seasons || [])
+        : seasonsData.seasons || [];
+
+      const sortedSeasons = [...allSeasons].sort((a, b) => {
         return new Date(b.endDate) - new Date(a.endDate);
       });
 
@@ -2266,28 +2424,50 @@
       }
 
       try {
-        const epResult = await getEPData();
-        const gpResult = await getGPData();
+        const epResult = await getEPData(playerName);
+        const gpResult = await getGPData(playerName);
 
-        const playerEP = epResult.data ? epResult.data.filter(e => e.player === playerName) : [];
-        const playerGP = gpResult.data ? gpResult.data.filter(g => g.player === playerName) : [];
+        // Determine season date range for filtering
+        let seasonStartDate = null;
+        let seasonEndDate = null;
+        if (currentRosterSeasonFilter && seasonsData) {
+          const allSeasons = Array.isArray(seasonsData)
+            ? seasonsData.flatMap(exp => exp.seasons || [])
+            : seasonsData.seasons || [];
+          const season = allSeasons.find(s => s.seasonCode == currentRosterSeasonFilter);
+          if (season) {
+            seasonStartDate = new Date(season.startDate);
+            seasonEndDate = new Date(season.endDate);
+          }
+        }
+
+        // Helper function to check if a timestamp is within the season
+        const isWithinSeason = (timestamp) => {
+          if (!seasonStartDate || !seasonEndDate) return true; // No season filter = include all
+          const date = new Date(timestamp);
+          return date >= seasonStartDate && date <= seasonEndDate;
+        };
+
+        // Filter EP and GP data by season
+        const playerEP = (epResult.data || []).filter(entry => isWithinSeason(entry.timestamp));
+        const playerGP = (gpResult.data || []).filter(entry => isWithinSeason(entry.timestamp));
 
         // Combine and sort by date
         const allHistory = [];
         playerEP.forEach(entry => {
           allHistory.push({
-            date: entry.date || 'Unknown',
+            date: entry.timestamp || 'Unknown',
             type: 'EP',
-            points: parseFloat(entry.points) || 0,
-            reason: entry.reason || 'EP Award'
+            points: parseFloat(entry.ep) || 0,
+            reason: entry.reason || 'No reason provided'
           });
         });
         playerGP.forEach(entry => {
           allHistory.push({
-            date: entry.date || 'Unknown',
+            date: entry.timestamp || 'Unknown',
             type: 'GP',
-            points: parseFloat(entry.points) || 0,
-            reason: entry.reason || 'GP Award'
+            points: parseFloat(entry.gp) || 0,
+            reason: entry.reason || 'No reason provided'
           });
         });
 
@@ -2306,29 +2486,55 @@
         if (allHistory.length === 0) {
           content.innerHTML = '<div class="points-history-empty">No points history found for this player.</div>';
         } else {
-          const totalEP = playerEP.reduce((sum, e) => sum + (parseFloat(e.points) || 0), 0);
-          const totalGP = playerGP.reduce((sum, g) => sum + (parseFloat(g.points) || 0), 0);
+          const totalEP = playerEP.reduce((sum, e) => sum + (parseFloat(e.ep) || 0), 0);
+          const totalGP = playerGP.reduce((sum, g) => sum + (parseFloat(g.gp) || 0), 0);
 
           let html = `
             <table class="points-history-table">
               <thead>
                 <tr>
+                  <th style="width: 40px;"></th>
                   <th>Date</th>
                   <th>Type</th>
                   <th>Points</th>
                   <th>Reason</th>
+                  <th style="width: 40px;"></th>
                 </tr>
               </thead>
               <tbody>
           `;
 
-          allHistory.forEach(entry => {
+          allHistory.forEach((entry, idx) => {
+            // Parse reason to convert Wowhead URLs to clickable links
+            let reasonHtml = '';
+            if (entry.reason && entry.reason.includes('wowhead.com')) {
+              // Extract item ID from Wowhead URL
+              const wowheadMatch = entry.reason.match(/https:\/\/www\.wowhead\.com\/item=(\d+)/);
+              if (wowheadMatch) {
+                const itemId = wowheadMatch[1];
+                const wowheadUrl = `https://www.wowhead.com/item=${itemId}`;
+                const remainingText = entry.reason.replace(wowheadUrl, '').trim();
+                // Use the same format as the working example in roster display
+                reasonHtml = `<a href="https://www.wowhead.com/item=${itemId}" data-wowhead="item=${itemId}">Item ${itemId}</a>${remainingText ? ' ' + esc(remainingText) : ''}`;
+              } else {
+                reasonHtml = esc(entry.reason);
+              }
+            } else {
+              reasonHtml = esc(entry.reason);
+            }
+
             html += `
               <tr>
+                <td style="text-align: center; padding: 0.5rem;">
+                  <button onclick="editPointsHistoryEntry('${playerName}', ${idx})" style="background: none; border: none; cursor: pointer; color: var(--accent); font-size: 1rem;">✎</button>
+                </td>
                 <td>${esc(entry.date)}</td>
                 <td>${esc(entry.type)}</td>
                 <td>${entry.points.toFixed(1)}</td>
-                <td>${esc(entry.reason)}</td>
+                <td>${reasonHtml}</td>
+                <td style="text-align: center; padding: 0.5rem;">
+                  <button onclick="deletePointsHistoryEntry('${playerName}', ${idx}, '${entry.type}')" style="background: none; border: none; cursor: pointer; color: var(--danger); font-size: 1rem;">✕</button>
+                </td>
               </tr>
             `;
           });
@@ -2353,6 +2559,11 @@
           `;
 
           content.innerHTML = html;
+
+          // Refresh Wowhead tooltips to process the new links
+          if (typeof $WowheadPower !== 'undefined') {
+            setTimeout(() => $WowheadPower.refreshLinks(), 100);
+          }
         }
 
         modal.classList.add('active');
@@ -2367,20 +2578,270 @@
       modal.classList.remove('active');
     }
 
+    // Store the current history data for editing
+    let currentPointsHistory = [];
+    let currentPlayerNameForHistory = '';
+    let currentEditEntry = null;
+    let currentEditPlayerName = '';
+
+    function closeEditPointsModal() {
+      const modal = document.getElementById('edit-points-modal');
+      modal.classList.remove('active');
+      currentEditEntry = null;
+    }
+
+    async function editPointsHistoryEntry(playerName, entryIdx) {
+      try {
+        // Fetch fresh data to get the entry ID
+        const epResult = await getEPData(playerName);
+        const gpResult = await getGPData(playerName);
+
+        // Determine season date range for filtering
+        let seasonStartDate = null;
+        let seasonEndDate = null;
+        if (currentRosterSeasonFilter && seasonsData) {
+          const allSeasons = Array.isArray(seasonsData)
+            ? seasonsData.flatMap(exp => exp.seasons || [])
+            : seasonsData.seasons || [];
+          const season = allSeasons.find(s => s.seasonCode == currentRosterSeasonFilter);
+          if (season) {
+            seasonStartDate = new Date(season.startDate);
+            seasonEndDate = new Date(season.endDate);
+          }
+        }
+
+        const isWithinSeason = (timestamp) => {
+          if (!seasonStartDate || !seasonEndDate) return true;
+          const date = new Date(timestamp);
+          return date >= seasonStartDate && date <= seasonEndDate;
+        };
+
+        const playerEP = (epResult.data || []).filter(entry => isWithinSeason(entry.timestamp));
+        const playerGP = (gpResult.data || []).filter(entry => isWithinSeason(entry.timestamp));
+
+        // Combine all entries with their source type
+        const allEntries = [
+          ...playerEP.map(e => ({...e, sourceType: 'EP', valueField: 'ep'})),
+          ...playerGP.map(g => ({...g, sourceType: 'GP', valueField: 'gp'}))
+        ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        const entry = allEntries[entryIdx];
+        if (!entry) return;
+
+        // Store the entry for saving later
+        currentEditEntry = entry;
+        currentEditPlayerName = playerName;
+
+        // Populate the modal with entry data
+        document.getElementById('edit-points-type').value = entry.sourceType;
+
+        // Convert timestamp to datetime-local format (remove 'Z' and milliseconds)
+        let datetimeValue = entry.timestamp;
+        if (datetimeValue) {
+          // Convert ISO 8601 to datetime-local format (YYYY-MM-DDTHH:mm)
+          const date = new Date(datetimeValue);
+          datetimeValue = date.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+        }
+        document.getElementById('edit-points-datetime').value = datetimeValue || '';
+
+        document.getElementById('edit-points-value').value = entry[entry.valueField];
+        document.getElementById('edit-points-reason').value = entry.reason || '';
+
+        // Open the modal
+        const modal = document.getElementById('edit-points-modal');
+        modal.classList.add('active');
+      } catch (err) {
+        console.error('[Points History] Error editing entry:', err);
+        showError('Error editing entry: ' + err.message);
+      }
+    }
+
+    async function savePointsEdit() {
+      try {
+        if (!currentEditEntry) return;
+
+        const newValue = parseFloat(document.getElementById('edit-points-value').value);
+        const newReason = document.getElementById('edit-points-reason').value;
+        const newDatetime = document.getElementById('edit-points-datetime').value;
+
+        if (isNaN(newValue)) {
+          showError('Please enter a valid number');
+          return;
+        }
+
+        if (!newDatetime) {
+          showError('Please select a date and time');
+          return;
+        }
+
+        // Convert datetime-local to ISO format for database
+        const isoDatetime = new Date(newDatetime).toISOString();
+
+        const endpoint = currentEditEntry.sourceType === 'EP' ? '/api/ep' : '/api/gp';
+        const fieldName = currentEditEntry.sourceType === 'EP' ? 'ep' : 'gp';
+
+        // Delete the old entry
+        await fetch(`${endpoint}?id=${currentEditEntry.id}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        // Add a new entry with the updated values
+        await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            player: currentEditPlayerName,
+            [fieldName]: newValue,
+            reason: newReason || null,
+            timestamp: isoDatetime
+          })
+        });
+
+        closeEditPointsModal();
+        showNotify(`Updated ${currentEditEntry.sourceType} for ${currentEditPlayerName}`, 'success');
+        await showPointsHistory(currentEditPlayerName);
+        await loadRoster();
+      } catch (err) {
+        console.error('[Points History] Error saving entry:', err);
+        showError('Error saving entry: ' + err.message);
+      }
+    }
+
+    async function deletePointsHistoryEntry(playerName, entryIdx, entryType) {
+      try {
+        // Fetch fresh data to get the entry ID
+        const epResult = entryType === 'EP' ? await getEPData(playerName) : null;
+        const gpResult = entryType === 'GP' ? await getGPData(playerName) : null;
+
+        // Determine season date range for filtering
+        let seasonStartDate = null;
+        let seasonEndDate = null;
+        if (currentRosterSeasonFilter && seasonsData) {
+          const allSeasons = Array.isArray(seasonsData)
+            ? seasonsData.flatMap(exp => exp.seasons || [])
+            : seasonsData.seasons || [];
+          const season = allSeasons.find(s => s.seasonCode == currentRosterSeasonFilter);
+          if (season) {
+            seasonStartDate = new Date(season.startDate);
+            seasonEndDate = new Date(season.endDate);
+          }
+        }
+
+        const isWithinSeason = (timestamp) => {
+          if (!seasonStartDate || !seasonEndDate) return true;
+          const date = new Date(timestamp);
+          return date >= seasonStartDate && date <= seasonEndDate;
+        };
+
+        const playerEP = epResult ? (epResult.data || []).filter(entry => isWithinSeason(entry.timestamp)) : [];
+        const playerGP = gpResult ? (gpResult.data || []).filter(entry => isWithinSeason(entry.timestamp)) : [];
+
+        // Combine all entries with their source type
+        const allEntries = [
+          ...playerEP.map(e => ({...e, sourceType: 'EP'})),
+          ...playerGP.map(g => ({...g, sourceType: 'GP'}))
+        ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        const entry = allEntries[entryIdx];
+        if (!entry) return;
+
+        // Ask for confirmation
+        if (!confirm(`Delete entire history entry for ${playerName}? This will remove this history entry and all associated data. This action cannot be undone.`)) {
+          return;
+        }
+
+        const endpoint = entry.sourceType === 'EP' ? '/api/ep' : '/api/gp';
+
+        // Delete the entry
+        const response = await fetch(`${endpoint}?id=${entry.id}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to delete entry');
+        }
+
+        showNotify(`Deleted ${entry.sourceType} entry for ${playerName}`, 'success');
+        await showPointsHistory(playerName);
+      } catch (err) {
+        console.error('[Points History] Error deleting entry:', err);
+        showError('Error deleting entry: ' + err.message);
+      }
+    }
+
     // ── EPGP View ────────────────────────────────────────────────────────────
     async function loadEPGPView() {
       try {
-        // Load players for EP form
-        loadPlayersForEPForm();
+        // Load players for EP and GP forms
+        await loadPlayersForEPForm();
+        await loadPlayersForGPForm();
         // Load gear slot points
-        loadGearSlotPoints();
+        await loadGearSlotPoints();
+
+        // Setup Item ID input event listener for auto-fetch
+        setupWowheadItemIdListener();
       } catch (err) {
         console.error('[EPGP] Error loading EPGP view:', err);
         showError('Error loading EPGP view: ' + err.message);
       }
     }
 
-    async function loadPlayersForEPForm() {
+    function setupWowheadItemIdListener() {
+      const itemIdInput = document.getElementById('gp-item-id-input');
+      if (!itemIdInput) return;
+
+      itemIdInput.addEventListener('change', async (e) => {
+        const itemId = e.target.value;
+        const previewDiv = document.getElementById('gp-item-preview');
+        const previewContent = document.getElementById('gp-item-preview-content');
+
+        if (!itemId) {
+          // Clear cached data and preview if input is empty
+          cachedWowheadData = {};
+          previewDiv.style.display = 'none';
+          return;
+        }
+
+        // Show loading indicator
+        itemIdInput.style.opacity = '0.7';
+        previewContent.innerHTML = '<em>Fetching item data from Wowhead...</em>';
+        previewDiv.style.display = 'block';
+
+        try {
+          const itemData = await fetchWowheadItemData(parseInt(itemId));
+          if (itemData) {
+            // Display the fetched data
+            const preview = `
+              <div style="line-height: 1.6;">
+                <strong>Item:</strong> ${itemData.itemName}<br>
+                <strong>Armor Type:</strong> ${itemData.armorType || '(not found)'}<br>
+                <strong>Gear Slot:</strong> ${itemData.gearSlot || '(not found)'}<br>
+                <strong>Instance:</strong> ${itemData.instance || '(not found)'}<br>
+                <strong>Boss:</strong> ${itemData.boss || '(not found)'}
+              </div>
+            `;
+            previewContent.innerHTML = preview;
+            itemIdInput.style.opacity = '1';
+            itemIdInput.style.borderColor = '#4CAF50';
+            console.log('[Wowhead] Item data fetched:', itemData);
+          } else {
+            previewContent.innerHTML = '<em style="color: #ff9800;">Could not fetch complete data. You can still add the item with manual details.</em>';
+            itemIdInput.style.opacity = '1';
+            itemIdInput.style.borderColor = '#ff9800';
+          }
+        } catch (error) {
+          previewContent.innerHTML = `<em style="color: #f44336;">Error fetching data: ${error.message}</em>`;
+          itemIdInput.style.opacity = '1';
+          itemIdInput.style.borderColor = '#f44336';
+          console.error('[Wowhead] Error fetching item data:', error);
+        }
+      });
+    }
+
+    async function populatePlayerDropdown(selectId) {
       try {
         const response = await fetch('/api/player', {
           method: 'GET',
@@ -2392,7 +2853,7 @@
         }
 
         const result = await response.json();
-        const playerSelect = document.getElementById('ep-player-select');
+        const playerSelect = document.getElementById(selectId);
 
         // Clear existing options except the placeholder
         playerSelect.innerHTML = '<option value="">Select a player</option>';
@@ -2409,6 +2870,14 @@
       } catch (err) {
         console.error('[EPGP] Error loading players:', err);
       }
+    }
+
+    async function loadPlayersForEPForm() {
+      await populatePlayerDropdown('ep-player-select');
+    }
+
+    async function loadPlayersForGPForm() {
+      await populatePlayerDropdown('gp-player-select');
     }
 
     async function addEffortPoints() {
@@ -2448,9 +2917,318 @@
         document.getElementById('ep-player-select').value = '';
         document.getElementById('ep-value-input').value = '';
         document.getElementById('ep-reason-input').value = '';
+
+        // Refresh roster to show updated EP total
+        await loadRoster();
       } catch (err) {
         console.error('[EPGP] Error adding effort points:', err);
         showError('Error adding effort points: ' + err.message);
+      }
+    }
+
+    // ── Wowhead Item Data Storage ───────────────────────────────────────────
+    let cachedWowheadData = {};
+
+    async function fetchWowheadItemData(itemId) {
+      if (!itemId) return null;
+
+      // Check cache first
+      if (cachedWowheadData[itemId]) {
+        console.log('[Item Fetch] Using cached data for item:', itemId);
+        return cachedWowheadData[itemId];
+      }
+
+      try {
+        // Try Blizzard API first (official, most reliable)
+        console.log('[Blizzard API] Attempting to fetch item data for ID:', itemId);
+        const blizzardResponse = await fetch(`/api/blizzard?itemId=${itemId}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (blizzardResponse.ok) {
+          const blizzardData = await blizzardResponse.json();
+          if (blizzardData.success && blizzardData.data) {
+            const data = blizzardData.data;
+            const itemData = {
+              itemId,
+              itemName: data.itemName || `Item ${itemId}`,
+              armorType: data.itemSubClass || null,
+              gearSlot: data.inventoryType || null,
+              boss: null,
+              instance: null,
+              url: `https://www.wowhead.com/item=${itemId}`,
+              source: 'blizzard'
+            };
+            cachedWowheadData[itemId] = itemData;
+            console.log('[Blizzard API] Successfully fetched item data:', itemData);
+            return itemData;
+          }
+        } else {
+          console.warn('[Blizzard API] Failed with status:', blizzardResponse.status);
+        }
+      } catch (error) {
+        console.warn('[Blizzard API] Error, falling back to Wowhead:', error.message);
+      }
+
+      // Fallback to Wowhead scraping if Blizzard API fails
+      try {
+        // Try multiple CORS proxies as fallback
+        const corsProxies = [
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://www.wowhead.com/item=${itemId}`)}`,
+          `https://corsproxy.io/?${encodeURIComponent(`https://www.wowhead.com/item=${itemId}`)}`
+        ];
+
+        let html = null;
+        let fetchError = null;
+
+        for (const proxyUrl of corsProxies) {
+          try {
+            console.log('[Wowhead] Trying to fetch item data for ID:', itemId);
+            const response = await fetch(proxyUrl, {
+              method: 'GET'
+            });
+
+            if (response.ok) {
+              html = await response.text();
+              console.log('[Wowhead] Successfully fetched HTML, length:', html.length);
+              break;
+            }
+          } catch (e) {
+            fetchError = e;
+            console.warn('[Wowhead] Proxy fetch failed:', e.message);
+            continue;
+          }
+        }
+
+        if (!html) {
+          console.error('[Wowhead] All proxies failed for item', itemId);
+          // Return minimal data so the process can continue
+          return {
+            itemId,
+            itemName: `Item ${itemId}`,
+            armorType: null,
+            gearSlot: null,
+            boss: null,
+            instance: null,
+            url: `https://www.wowhead.com/item=${itemId}`
+          };
+        }
+
+        // Extract item name from title
+        const titleMatch = html.match(/<title>([^<]+)<\/title>/);
+        let itemName = titleMatch ? titleMatch[1].replace(' - Item - World of Warcraft', '').trim() : `Item ${itemId}`;
+        itemName = itemName.replace(/[™®©]/g, '').trim();
+        console.log('[Wowhead] Extracted item name:', itemName);
+
+        // Extract armor type and gear slot from page content
+        let armorType = null;
+        let gearSlot = null;
+        let boss = null;
+        let instance = null;
+
+        // Look for common patterns in Wowhead pages for slot and armor type
+        const gearSlotMatches = [
+          html.match(/Slot:\s*<\/span>\s*<[^>]*>([^<]+)<\//i),
+          html.match(/<td[^>]*>\s*Slot\s*<\/td>\s*<td[^>]*>([^<]+)<\/td>/i),
+          html.match(/slot":\s*"([^"]+)"/i),
+          html.match(/>([^<]*(?:Head|Neck|Shoulder|Chest|Waist|Legs|Feet|Wrist|Hands|Finger|Trinket|Back|Main Hand|Off Hand|Ranged|2-Hand)[^<]*)<\/td>/i)
+        ];
+
+        const armorTypeMatches = [
+          html.match(/Armor Type:\s*<\/span>\s*<[^>]*>([^<]+)<\//i),
+          html.match(/<td[^>]*>\s*Armor Type\s*<\/td>\s*<td[^>]*>([^<]+)<\/td>/i),
+          html.match(/"armor_type":\s*"([^"]+)"/i),
+          html.match(/>([^<]*(?:Cloth|Leather|Mail|Plate)[^<]*)<\/td>/i)
+        ];
+
+        // Get first match that isn't null
+        for (const match of gearSlotMatches) {
+          if (match) {
+            gearSlot = match[1] ? match[1].trim() : null;
+            if (gearSlot) break;
+          }
+        }
+
+        for (const match of armorTypeMatches) {
+          if (match) {
+            armorType = match[1] ? match[1].trim() : null;
+            if (armorType) break;
+          }
+        }
+
+        console.log('[Wowhead] Extracted gear slot:', gearSlot, 'armor type:', armorType);
+
+        // Try to extract boss and instance info from drops section
+        const dropsMatch = html.match(/(?:Dropped by|<span[^>]*>Drops?<\/span>[^<]*<[^>]*>|"drops":\[)([\s\S]{0,2000}?)(?:\]|<\/table>|<\/div>)/i);
+
+        if (dropsMatch) {
+          const dropsContent = dropsMatch[1];
+          console.log('[Wowhead] Found drops section');
+
+          // Look for boss/creature names
+          const bossNameMatches = dropsContent.match(/>([^<]{2,40})<\/a>/gi);
+          if (bossNameMatches && bossNameMatches.length > 0) {
+            for (const bossMatch of bossNameMatches) {
+              const cleanName = bossMatch.replace(/^>|<\/a>$/g, '').trim();
+              if (cleanName && cleanName.length > 2 && cleanName !== 'Item Drop') {
+                boss = cleanName;
+                break;
+              }
+            }
+          }
+
+          // Look for zone/raid names
+          const zoneMatches = dropsContent.match(/Zone[^>]*>\s*([^<]+)<|\/zone\/([^"]+)"/gi);
+          if (zoneMatches && zoneMatches.length > 0) {
+            instance = zoneMatches[0].replace(/Zone[^>]*>\s*|<|\/zone\/|["']/g, '').trim();
+          }
+        }
+
+        console.log('[Wowhead] Extracted boss:', boss, 'instance:', instance);
+
+        // Store fetched data
+        const itemData = {
+          itemId,
+          itemName: itemName,
+          armorType: armorType,
+          gearSlot: gearSlot,
+          boss: boss,
+          instance: instance,
+          url: `https://www.wowhead.com/item=${itemId}`
+        };
+
+        itemData.source = 'wowhead';
+        cachedWowheadData[itemId] = itemData;
+        console.log('[Wowhead] Fallback scrape successful, item data:', itemData);
+        return itemData;
+      } catch (error) {
+        console.error(`[Wowhead] Fallback scrape failed for item ${itemId}:`, error);
+        // Return minimal data so the process can continue
+        return {
+          itemId,
+          itemName: `Item ${itemId}`,
+          armorType: null,
+          gearSlot: null,
+          boss: null,
+          instance: null,
+          url: `https://www.wowhead.com/item=${itemId}`,
+          source: 'none'
+        };
+      }
+    }
+
+    async function addItemToLootTable(player, itemId, reason) {
+      try {
+        const itemData = await fetchWowheadItemData(itemId);
+        if (!itemData) {
+          console.warn(`Could not fetch item data for ${itemId}`);
+          return false;
+        }
+
+        // Get player class from roster (if available)
+        const records = await getAllRows();
+        let playerClass = null;
+        // Note: Class info is not currently stored in roster, so we'll leave it empty
+        // Users can manually edit if needed
+
+        // Prepare loot record
+        const lootRecord = {
+          player: player,
+          item: itemData.itemName,
+          boss: itemData.boss,
+          response: 'Manually Given',
+          date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+          armor_type: itemData.armorType,
+          gear_slot: itemData.gearSlot,
+          class: playerClass,
+          instance: itemData.instance,
+          note: reason || ''
+        };
+
+        // Add to loot table
+        const response = await fetch('/api/loot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rows: [lootRecord] })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to add item to loot table');
+        }
+
+        return true;
+      } catch (error) {
+        console.error('[Loot] Error adding item to loot table:', error);
+        return false;
+      }
+    }
+
+    async function addGearPoints() {
+      try {
+        const player = document.getElementById('gp-player-select').value;
+        const gp = parseFloat(document.getElementById('gp-value-input').value);
+        const itemId = document.getElementById('gp-item-id-input').value;
+        const reason = document.getElementById('gp-reason-input').value;
+
+        if (!player) {
+          showError('Please select a player');
+          return;
+        }
+
+        if (isNaN(gp) || gp === '') {
+          showError('Please enter a valid GP value');
+          return;
+        }
+
+        // Build reason with Wowhead link if item ID is provided
+        let finalReason = reason || '';
+        if (itemId) {
+          const wowheadLink = `https://www.wowhead.com/item=${parseInt(itemId)}`;
+          finalReason = finalReason ? `${wowheadLink} ${finalReason}` : wowheadLink;
+        }
+
+        const response = await fetch('/api/gp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            player: player,
+            gp: gp,
+            item_id: itemId ? parseInt(itemId) : null,
+            reason: finalReason || null
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to add gear points');
+        }
+
+        showNotify(`Added ${gp} GP to ${player}`, 'success');
+
+        // If item ID provided, try to add item to loot table
+        if (itemId) {
+          const added = await addItemToLootTable(player, itemId, reason);
+          if (added) {
+            showNotify(`Added item to loot table`, 'success');
+          }
+        }
+
+        // Clear form and preview
+        document.getElementById('gp-player-select').value = '';
+        document.getElementById('gp-value-input').value = '';
+        document.getElementById('gp-item-id-input').value = '';
+        document.getElementById('gp-reason-input').value = '';
+        document.getElementById('gp-item-preview').style.display = 'none';
+        document.getElementById('gp-item-preview-content').innerHTML = '';
+        cachedWowheadData = {}; // Clear cache
+
+        // Refresh roster to show updated GP total
+        await loadRoster();
+      } catch (err) {
+        console.error('[EPGP] Error adding gear points:', err);
+        showError('Error adding gear points: ' + err.message);
       }
     }
 
@@ -2467,7 +3245,7 @@
 
     async function loadGearSlotPoints() {
       try {
-        const response = await fetch('/api/gear_slot_points', {
+        const response = await fetch('/api/gear', {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -2711,9 +3489,20 @@
       if (added > 0) parts.push(`${added} row${added !== 1 ? 's' : ''} added`);
       if (skipped > 0) parts.push(`${skipped} duplicate${skipped !== 1 ? 's' : ''} skipped`);
       const type = added === 0 ? 'warning' : 'success';
-      showNotify(parts.join(' · ') || 'No changes made.', type);
+      const message = parts.join(' · ') || 'No changes made.';
 
-      await refreshDisplay();
+      // Show notification right below import box
+      const importNotify = document.getElementById('import-notify');
+      importNotify.textContent = message;
+      importNotify.className = 'notify ' + type;
+      importNotify.style.display = 'block';
+      clearTimeout(importNotify._timer);
+      importNotify._timer = setTimeout(() => { importNotify.style.display = 'none'; }, 10000);
+
+      // Only refresh the loot display if we're currently viewing the loot page
+      if (currentPage === 'loot') {
+        await refreshDisplay();
+      }
     }
 
     // ── Display ──────────────────────────────────────────────────────────────
