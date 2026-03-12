@@ -22,8 +22,4 @@ database_id = "468abc42-381f-4a0f-8708-e4d98e3a1e92"
 # Blizzard API Configuration
 # Required for item data fetching from official Blizzard WoW API
 # Get credentials from: https://developer.battle.net/
-# Set these in your .env.local or secrets (never commit real values)
-[env.development]
-vars = { ENVIRONMENT = "development" }
-
-# For production, set BLIZZARD_CLIENT_ID and BLIZZARD_CLIENT_SECRET in Cloudflare dashboard
+# Set BLIZZARD_CLIENT_ID and BLIZZARD_CLIENT_SECRET in Cloudflare Pages environment variables
